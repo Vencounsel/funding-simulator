@@ -4,10 +4,10 @@
 
 @layer base {
 	:root {
-		--background-color: #f5f5ee;
-		--border-dark: #e2e2cf;
+		--background-color: #f0f0f0;
+		--border-dark: #30301c;
 		--border-dark-hover: #cfcfb0;
-		--text-dark: #30301c;
+		--text-dark: #cfcfb0;
 		--blue: #0c8ce9;
 	}
 }
