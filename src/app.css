@@ -5,9 +5,9 @@
 @layer base {
 	:root {
 		--background-color: #f0f0f0;
-		--border-dark: #30301c;
-		--border-dark-hover: #cfcfb0;
-		--text-dark: #cfcfb0;
+		--border-dark: #FF3366;
+		--border-dark-hover: #6a7adf;
+		--text-dark: #30301c;
 		--blue: #0c8ce9;
 	}
 }
