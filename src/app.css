@@ -4,11 +4,11 @@
 
 @layer base {
 	:root {
-		--background-color: #f5f5ee;
-		--border-dark: #e2e2cf;
-		--border-dark-hover: #cfcfb0;
-		--text-dark: #30301c;
-		--blue: #0c8ce9;
+		--background-color: #1f1f1f;
+		--border-dark: #3a3a3a;
+		--border-dark-hover: #4a4a4a;
+		--text-dark: #ffffff;
+		--blue: #ff4081;
 	}
 }
 
