@@ -4,10 +4,10 @@
 
 @layer base {
 	:root {
-		--background-color: #f0f0f0;
+		--background-color: #000000;
 		--border-dark: #FF3366;
 		--border-dark-hover: #6a7adf;
-		--text-dark: #30301c;
+		--text-dark: #ffffff;
 		--blue: #6a7adf;
 	}
 }
@@ -20,7 +20,7 @@
 
 .input-shadow:focus,
 .with-focus-ring:focus {
-	box-shadow: 0px 0px 0px 1px #0c8de9;
+	box-shadow: 0px 0px 0px 1px #6a7adf;
 	border-color: var(--blue);
 }
 
@@ -51,7 +51,7 @@
 
 [data-theme='dark'] .input-shadow:focus,
 [data-theme='dark'] .with-focus-ring:focus {
-	box-shadow: 0px 0px 0px 1px #0c8de9;
+	box-shadow: 0px 0px 0px 1px #6a7adf;
 	border-color: var(--blue);
 }
 
