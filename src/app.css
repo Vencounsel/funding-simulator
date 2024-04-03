@@ -29,16 +29,16 @@
 }
 
 .primary-button {
-	box-shadow: 0px 1px #af3a03;
+	box-shadow: 0px 1px #6699FF;
 }
 
 .primary-button:hover {
-	background: #fb5304;
+	background: #6a7adf;
 }
 
 [data-theme='dark'] .funding-box {
 	box-shadow: none;
-	border: 2px solid #e1e1e1;
+	border: 2px solid var(--border-dark);
 }
 
 [data-theme='dark'] .menu-box {
@@ -57,14 +57,14 @@
 
 .funding-box {
 	box-shadow:
-		0px 4px 20px 0px #e6e6db,
-		0px 1px 2px 2px #e5e5dc;
+		0px 4px 20px 0px var(--border-dark-hover),
+		0px 1px 2px 2px var(--border-dark);
 }
 
 .menu-box {
 	box-shadow:
-		0px 10px 20px 0px #e6e6db,
-		0px 2px 2px 0px #e5e5dc;
+		0px 10px 20px 0px var(--border-dark-hover),
+		0px 2px 2px 0px var(--border-dark);
 }
 
 /* --- */
@@ -120,7 +120,9 @@ body {
 }
 
 html[data-theme='dark'] {
-	background: #1b1b15;
+	background: var(--background-color);
+	color: var(--text-dark)
+
 }
 
 [data-theme='dark'] #content,
