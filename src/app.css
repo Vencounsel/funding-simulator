@@ -16,6 +16,7 @@
 
 .input-shadow {
 	box-shadow: inset 0px 1.5px var(--border-dark);
+	color: #3f00ff /* Indigo Blue */
 }
 
 .input-shadow:focus,
