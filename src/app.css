@@ -31,6 +31,7 @@
 
 .primary-button {
 	box-shadow: 0px 1px #af3a03;
+	color: #3f00ff /* Indigo Blue */
 }
 
 .primary-button:hover {
