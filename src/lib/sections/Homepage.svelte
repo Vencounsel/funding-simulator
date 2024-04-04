@@ -47,7 +47,7 @@
 	in:box={{ delay: 100, duration: 300, scale: 25 }}
 	class="will-change-transform origin-top h-full min-h-screen flex flex-col max-w-[400px] mx-auto absolute w-full left-[50%] -translate-x-[50%] top-0"
 >
-	<div class="text-xl opacity-50 text-textLight py-10 text-center">Startup Equity & Fundraising Calculator by VenCounsel</div>
+	<div class="text-xl opacity-50 text-textLight py-10 text-center">Founder Equity & Fundraising Calculator by VenCounsel</div>
 	{#if parsedSims.length > 0}
 		<div class="text-xs py-7 text-center">Previous simulations</div>
 
