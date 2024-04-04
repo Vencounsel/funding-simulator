@@ -5,14 +5,14 @@ export default {
 		extend: {
 			colors: {
 				bg: 'var(--background-color)',
-				textDark: 'var(--text-dark)',
-				textLight: '#D3D3D3',
-				primaryOrange: '#FF7043',
-				borderLight: '#444444',
-				borderDark: 'var(--border-dark)',
-				borderDarkHover: 'var(--border-dark-hover)',
-				blue: 'var(--blue)',
-				dangerLight: '#FF6B6B'
+        			textDark: 'var(--text-dark)',
+       				textLight: '#FFFFFF',
+      				primaryOrange: 'var(--orange)',
+        			borderLight: '#EEEEE2',
+        			borderDark: 'var(--border-dark)',
+        			borderDarkHover: 'var(--border-dark-hover)',
+        			blue: 'var(--blue)',
+        			dangerLight: '#FF6B6B'
 			}
 		}
 	},
