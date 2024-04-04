@@ -4,11 +4,11 @@
 
 @layer base {
 	:root {
-		--background-color: #000000;
-		--border-dark: #FF3366;
-		--border-dark-hover: #6a7adf;
-		--text-dark: #ffffff;
-		--blue: #6a7adf;
+		--background-color: #F5F5F5;
+ 		--border-dark: #1A2E6C;
+ 		--border-dark-hover: #1A2E6C;
+ 		--text-dark: #1A2E6C;
+  		--blue: #1A2E6C;
 	}
 }
 
@@ -72,11 +72,12 @@
 /* --- */
 
 html .tippy-box {
-	background-color: black;
-	border-radius: 8px;
-	font-size: 12px;
-	padding: 2px 4px;
-	z-index: 999;
+	background-color: #1A2E6C;
+  	color: #FFFFFF;
+  	border-radius: 8px;
+  	font-size: 12px;
+  	padding: 2px 4px;
+  	z-index: 999;
 }
 
 html {
