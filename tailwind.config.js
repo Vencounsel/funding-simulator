@@ -6,13 +6,16 @@ export default {
 			colors: {
 				bg: 'var(--background-color)',
         			textDark: 'var(--text-dark)',
-       				textLight: '#FFFFFF',
-      				primaryOrange: 'var(--orange)',
-        			borderLight: '#EEEEE2',
-        			borderDark: 'var(--border-dark)',
-        			borderDarkHover: 'var(--border-dark-hover)',
-        			blue: 'var(--blue)',
-        			dangerLight: '#FF6B6B'
+        			textLight: '#FFFFFF',
+			        primaryOrange: 'var(--orange)',
+			        borderLight: '#EEEEE2',
+			        borderDark: 'var(--border-dark)',
+			        borderDarkHover: 'var(--border-dark-hover)',
+			        blue: 'var(--blue)',
+			        lightBlue: 'var(--light-blue)',
+			        pink: 'var(--pink)',
+			        pinkHover: 'var(--pink-hover)',
+			        dangerLight: '#FF6B6B'
 			}
 		}
 	},
