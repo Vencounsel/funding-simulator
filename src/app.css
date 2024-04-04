@@ -1,160 +1,128 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
 @layer base {
-	:root {
-		--background-color: #F5F5F5;
- 		--border-dark: #1A2E6C;
- 		--border-dark-hover: #1A2E6C;
- 		--text-dark: #1A2E6C;
-  		--blue: #1A2E6C;
-	}
+:root {
+--background-color: #F5F5F5;
+--border-dark: #1A2E6C;
+--border-dark-hover: #6a7adf;
+--text-dark: #1A2E6C;
+--blue: #1A2E6C;
+--light-blue: #6699FF;
+--orange: #FB651F;
+--pink: #FF3366;
 }
-
+}
 /* app classes */
-
 .input-shadow {
-	box-shadow: inset 0px 1.5px var(--border-dark);
+box-shadow: inset 0px 1.5px var(--border-dark);
 }
-
 .input-shadow:focus,
 .with-focus-ring:focus {
-	box-shadow: 0px 0px 0px 1px #6a7adf;
-	border-color: var(--blue);
+box-shadow: 0px 0px 0px 1px var(--light-blue);
+border-color: var(--blue);
 }
-
 .button-shadow {
-	box-shadow: 0px 1px var(--border-dark-hover);
+box-shadow: 0px 1px var(--border-dark-hover);
 }
-
 .primary-button {
-	box-shadow: 0px 1px #6699FF;
+box-shadow: 0px 1px var(--orange);
 }
-
 .primary-button:hover {
-	background: #6a7adf;
+background: var(--pink);
 }
-
 [data-theme='dark'] .funding-box {
-	box-shadow: none;
-	border: 2px solid var(--border-dark);
+box-shadow: none;
+border: 2px solid var(--border-dark);
 }
-
 [data-theme='dark'] .menu-box {
-	box-shadow: none;
+box-shadow: none;
 }
-
 [data-theme='dark'] .input-shadow {
-	box-shadow: inset 0px 0px 0px 1px var(--border-dark);
+box-shadow: inset 0px 0px 0px 1px var(--border-dark);
 }
-
 [data-theme='dark'] .input-shadow:focus,
 [data-theme='dark'] .with-focus-ring:focus {
-	box-shadow: 0px 0px 0px 1px #6a7adf;
-	border-color: var(--blue);
+box-shadow: 0px 0px 0px 1px var(--light-blue);
+border-color: var(--blue);
 }
-
 .funding-box {
-	color: var(--text-dark);
-	background-color: #ffffff;
-	box-shadow:
-		0px 4px 20px 0px var(--border-dark-hover),
-		0px 1px 2px 2px var(--border-dark);
+color: var(--text-dark);
+background-color: #ffffff;
+box-shadow:
+0px 4px 20px 0px rgba(26, 46, 108, 0.1),
+0px 1px 2px 2px rgba(26, 46, 108, 0.05);
 }
-
 .menu-box {
-	box-shadow:
-		0px 10px 20px 0px var(--border-dark-hover),
-		0px 2px 2px 0px var(--border-dark);
+box-shadow:
+0px 10px 20px 0px rgba(26, 46, 108, 0.1),
+0px 2px 2px 0px rgba(26, 46, 108, 0.05);
 }
-
 /* --- */
-
 html .tippy-box {
-	background-color: #1A2E6C;
-  	color: #FFFFFF;
-  	border-radius: 8px;
-  	font-size: 12px;
-  	padding: 2px 4px;
-  	z-index: 999;
+background-color: var(--blue);
+color: #FFFFFF;
+border-radius: 8px;
+font-size: 12px;
+padding: 2px 4px;
+z-index: 999;
 }
-
 html {
-	font-family: 'Inter', sans-serif;
-	color: var(--text-dark);
-	background: var(--background-color);
-
-	cursor: default;
-	user-select: none;
+font-family: 'Inter', sans-serif;
+color: var(--text-dark);
+background: var(--background-color);
+cursor: default;
+user-select: none;
 }
-
 *,
 *::before,
 *::after {
-	box-sizing: border-box;
+box-sizing: border-box;
 }
-
-* {
-	margin: 0;
-	min-width: 0;
-	transition: 0.1s all;
-	outline: none;
-}
-
+{ margin: 0; min-width: 0; transition: 0.1s all; outline: none; }
 body {
-	line-height: 1.2;
-	-webkit-font-smoothing: antialiased;
+line-height: 1.2;
+-webkit-font-smoothing: antialiased;
 }
-
 @media screen and (max-width: 640px) {
-	body {
-		position: relative;
-	}
-
-	.funding-box {
-		box-shadow: 0px 0px 500px 500px rgba(0, 0, 0, 0.2);
-	}
+body {
+position: relative;
 }
-
+.funding-box {
+box-shadow: 0px 0px 500px 500px rgba(0, 0, 0, 0.2);
+}
+}
 #content {
-	min-height: 100vh;
-	background: var(--background-color);
+min-height: 100vh;
+background: var(--background-color);
 }
-
 html[data-theme='dark'] {
-	background: var(--background-color);
-	color: var(--text-dark)
-
+background: var(--background-color);
+color: var(--text-dark)
 }
-
 [data-theme='dark'] #content,
 [data-theme='dark'] .__invertable {
-	filter: invert(0.92) hue-rotate(180deg);
+filter: invert(0.92) hue-rotate(180deg);
 }
-
 img,
 picture,
 video,
 canvas,
 svg {
-	display: block;
-	max-width: 100%;
+display: block;
+max-width: 100%;
 }
-
 input,
 button,
 textarea,
 select {
-	font: inherit;
-	outline: none;
+font: inherit;
+outline: none;
 }
-
 input {
-	cursor: default;
+cursor: default;
 }
-
 #root,
 #__next {
-	isolation: isolate;
+isolation: isolate;
 }
