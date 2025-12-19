@@ -190,7 +190,13 @@
 	</a>
 </div>
 
+<!-- Desktop footer -->
 <div class="__invertable fixed bottom-[30px] right-[30px] text-[11px] text-textLight z-[3] max-sm:hidden text-right">
 	Built on vibes ✨ by <a href="https://vencounsel.com" target="_blank" class="hover:text-primary transition-colors">VenCounsel</a>
 	<div class="mt-1 opacity-60">⚠️ For fun only. Not legal, tax, financial, or relationship advice. Be demure. Be mindful.</div>
+</div>
+
+<!-- Mobile footer -->
+<div class="__invertable hidden max-sm:block fixed bottom-[70px] left-[50%] -translate-x-[50%] z-[2] text-center text-[10px] text-textLight opacity-60 w-[280px]">
+	⚠️ For fun only. Not legal, tax, financial, or relationship advice.
 </div>
