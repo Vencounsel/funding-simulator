@@ -159,9 +159,9 @@ export const generateNameForEvent = (type: 'priced' | 'safe' | 'convertible', po
 	} else if (type === 'safe') {
 		const numberOfSafesBefore = eventsBefore.filter((e) => e.type === 'safe').length;
 		let counter = 1;
-		name = 'Safe ' + (numberOfSafesBefore + 1);
+		name = 'SAFE ' + (numberOfSafesBefore + 1);
 		while (allEvents.map((e) => e.name).includes(name)) {
-			name = 'Safe ' + (numberOfSafesBefore + 1) + ' - ' + counter;
+			name = 'SAFE ' + (numberOfSafesBefore + 1) + ' - ' + counter;
 			counter++;
 		}
 	} else if (type === 'convertible') {

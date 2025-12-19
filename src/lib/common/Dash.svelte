@@ -1,7 +1,7 @@
 <script lang="ts">
 	import PlusButton from './PlusButton.svelte';
 
-	export let height: string = '130px';
+	export let height: string = '70px';
 	export let noButton: boolean = false;
 	let showPlusButton = false;
 
@@ -9,11 +9,12 @@
 </script>
 
 <div
-	class="flex justify-center relative w-10"
+	class="flex justify-center items-center relative w-10"
+	style:height
 	on:mouseenter={() => (showPlusButton = true)}
 	on:mouseleave={() => (showPlusButton = false)}
 >
-	<div class="w-[3px] bg-[url(/stripe.svg)] max-sm:!h-[300px]" style:height />
+	<div class="w-[3px] h-full bg-[url(/stripe.svg)] max-sm:!h-[80px]" />
 	{#if !noButton && showPlusButton}
 		<div class="max-sm:hidden">
 			<PlusButton {position} />

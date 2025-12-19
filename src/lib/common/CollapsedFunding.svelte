@@ -17,17 +17,17 @@
 			if (data.mfn && !data.proRata) {
 				return 'MFN';
 			} else if (data.proRata && !data.mfn) {
-				return 'Pro-rata';
+				return 'Pro-Rata';
 			} else if (data.proRata && data.mfn) {
-				return 'MFN, Pro-rata';
+				return 'MFN, Pro-Rata';
 			}
 		} else if (data.type === 'convertible') {
 			if (data.proRata) {
-				return 'Pro-rata';
+				return 'Pro-Rata';
 			}
 		} else {
 			if (data.proRata) {
-				return 'Pro-rata';
+				return 'Pro-Rata';
 			}
 		}
 		return '-';
@@ -105,11 +105,11 @@
 		if (data.discount && !data.valCap) {
 			res += 'Discount';
 		} else if (!data.discount && data.valCap) {
-			res += 'Valuation cap';
+			res += 'Valuation Cap';
 		} else if (!data.discount && !data.valCap) {
 			res += 'Uncapped';
 		} else if (data.discount && data.valCap) {
-			res += 'Valuation cap & discount';
+			res += 'Valuation Cap & Discount';
 		}
 		if (data.mfn) {
 			res += ' (MFN)';
@@ -122,15 +122,14 @@
 		let res = '';
 
 		if (data.discount && !data.valCap) {
-			res += 'Disc.';
+			res += 'Discount';
 		} else if (!data.discount && data.valCap) {
-			res += 'Cap';
+			res += 'Valuation Cap';
 		} else if (!data.discount && !data.valCap) {
 			res += 'Uncapped';
 		} else if (data.discount && data.valCap) {
-			res += 'Cap & disc.';
+			res += 'Valuation Cap & Discount';
 		}
-		res += ` • ${data.interestRate}% • ${data.term}mo`;
 		return res;
 	};
 
@@ -155,42 +154,47 @@
 		</div>
 		<div
 			class={cn(
-				'max-sm:pr-2 text-center text-xs text-textLight my-2',
+				'max-sm:pr-2 text-center text-xs my-2',
+				data.type === 'priced' ? 'text-blue font-medium' : 'text-textLight',
 				sameNameError && 'text-red-500'
 			)}
 		>
 			{sameNameError
 				? 'Error: Duplicate name'
 				: data.type === 'priced'
-					? 'Priced round'
+					? 'Priced Round'
 					: data.type === 'convertible'
 						? 'Note - ' + getConvertibleNoteLabel()
-						: 'Safe - ' + getSafeLabel()}
+						: 'SAFE - ' + getSafeLabel()}
 		</div>
 	</div>
 	<div
 		on:click
 		class={cn(
 			'cursor-pointer hover:border-borderDark active:border-borderDarkHover p-[10px] pr-5 text-sm flex gap-5 border-2 rounded-xl border-borderLight bg-white leading-[1.2] max-sm:w-[350px] max-sm:justify-between max-sm:p-5 max-sm:py-3',
+			data.type === 'priced' && 'border-blue/30 bg-lightBlue/10 hover:border-blue/50 hover:bg-lightBlue/20',
 			sameNameError && 'border-red-200 hover:border-red-300 active:border-red-300'
 		)}
 	>
-		<div class={cn('px-3 py-2 rounded-lg bg-bg max-sm:hidden')}>
+		<div class={cn(
+			'px-3 py-2 rounded-lg max-sm:hidden',
+			data.type === 'priced' ? 'bg-blue/10 text-blue font-medium' : 'bg-bg'
+		)}>
 			{data.name}
 		</div>
 		<div class="flex flex-col justify-between">
-			<div class="text-[11px] text-textLight">Raised</div>
-			<div class="text-primaryOrange">{formatAmount(data.amount)}</div>
+			<div class="text-[11px] text-textLight">Raise</div>
+			<div class="text-primary">{formatAmount(data.amount)}</div>
 		</div>
 		{#if data.type === 'safe'}
 			<div class="flex flex-col justify-between">
-				<div class="text-[11px] text-textLight">ValCap</div>
+				<div class="text-[11px] text-textLight">Cap</div>
 				<div class="">{data.valCap ? formatAmount(data.valCap) : '-'}</div>
 			</div>
 		{/if}
 		{#if data.type === 'convertible'}
 			<div class="flex flex-col justify-between">
-				<div class="text-[11px] text-textLight">ValCap</div>
+				<div class="text-[11px] text-textLight">Cap</div>
 				<div class="">{data.valCap ? formatAmount(data.valCap) : '-'}</div>
 			</div>
 		{/if}
@@ -209,8 +213,16 @@
 		{/if}
 		{#if data.type === 'convertible'}
 			<div class="flex flex-col justify-between">
+				<div class="text-[11px] text-textLight">Disc.</div>
+				<div class="">{data.discount ? data.discount + '%' : '-'}</div>
+			</div>
+			<div class="flex flex-col justify-between">
 				<div class="text-[11px] text-textLight">Interest</div>
 				<div class="">{data.interestRate}%</div>
+			</div>
+			<div class="flex flex-col justify-between">
+				<div class="text-[11px] text-textLight">Term</div>
+				<div class="">{data.term}mo</div>
 			</div>
 		{/if}
 		{#if data.type === 'priced' && data.options}
@@ -224,7 +236,10 @@
 			<div class="">{getOtherString(data)}</div>
 		</div>
 	</div>
-	<div class="text-xs p-3 text-center w-fit mx-auto text-textLight bg-bg">
+	<div class={cn(
+		'text-xs p-3 text-center w-fit mx-auto',
+		data.type === 'priced' ? 'text-blue/70 bg-lightBlue/5 rounded-lg' : 'text-textLight bg-bg'
+	)}>
 		{#if data.type === 'priced'}
 			Diluted by {getDilutedBy()}% <span class="max-sm:hidden">{getIncludingMessage()}</span>
 		{:else if data.type === 'safe' && effectiveValuation}

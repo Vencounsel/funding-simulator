@@ -53,6 +53,7 @@
 				valCap: 2_000_000,
 				discount: 0,
 				proRata: false,
+				mfn: false,
 				name
 			},
 			...$events.slice(position)
@@ -88,7 +89,8 @@
 				proRata: true,
 				valuation: getDefaultPricedRoundAmount(name)[1] * 1_000_000,
 				options: 10,
-				participations: getParticipations()
+				participations: getParticipations(),
+				monthsToRound: 12
 			},
 			...$events.slice(position)
 		];
@@ -101,7 +103,8 @@
 			{
 				type: 'options',
 				amount: 2,
-				reserved: 10
+				reserved: 10,
+				grantName: ''
 			},
 			...$events.slice(position)
 		];
@@ -122,12 +125,12 @@
 	bind:this={ref}
 	on:mouseleave={() => (showMenu = false)}
 	transition:box={{ scale: 20, duration: 200 }}
-	class="rounded-full absolute z-20 left-[50%] top-[50%] h-10 w-10 -translate-x-[50%] -translate-y-[50%] bg-bg"
+	class="rounded-full absolute z-20 left-[50%] top-[50%] h-11 w-11 max-sm:h-12 max-sm:w-12 -translate-x-[50%] -translate-y-[50%] bg-bg flex items-center justify-center"
 >
 	<svg
-		width="39"
-		height="39"
-		class="group cursor-pointer active:scale-[0.97]"
+		width="28"
+		height="28"
+		class="group cursor-pointer active:scale-[0.97] max-sm:w-8 max-sm:h-8"
 		viewBox="0 0 39 39"
 		fill="none"
 		xmlns="http://www.w3.org/2000/svg"
@@ -165,11 +168,11 @@
 						!showSafe && 'pointer-events-none'
 					)}
 				>
-					<div class={cn('w-3 mr-3 text-primaryOrange', !showSafe && 'opacity-30')}>
+					<div class={cn('w-3 mr-3 text-primary', !showSafe && 'opacity-30')}>
 						<SafeIcon />
 					</div>
 					<span class={cn(!showSafe && 'opacity-30')}
-						>Safe<span class="text-textLight ml-1">(Post-money)</span></span
+						>SAFE<span class="text-textLight ml-1">(Post-money)</span></span
 					>
 				</div>
 				<div
@@ -179,11 +182,11 @@
 						!showNote && 'pointer-events-none'
 					)}
 				>
-					<div class={cn('w-3 mr-3 text-primaryOrange', !showNote && 'opacity-30')}>
+					<div class={cn('w-3 mr-3 text-primary', !showNote && 'opacity-30')}>
 						<NoteIcon />
 					</div>
 					<span class={cn(!showNote && 'opacity-30')}
-						>Convertible note<span class="text-textLight ml-1">/ Debt</span></span
+						>Convertible Note<span class="text-textLight ml-1">/ Debt</span></span
 					>
 				</div>
 				<div
@@ -193,12 +196,12 @@
 						!showPriced && 'pointer-events-none'
 					)}
 				>
-					<div class={cn('w-3 mr-3 text-primaryOrange', !showPriced && 'opacity-30')}>
+					<div class={cn('w-3 mr-3 text-primary', !showPriced && 'opacity-30')}>
 						<PricedIcon />
 					</div>
 
 					<span class={cn(!showPriced && 'opacity-30')}
-						>Priced round<span class="text-textLight ml-1">/ Equity financing</span></span
+						>Priced Round<span class="text-textLight ml-1">/ Equity Financing</span></span
 					>
 				</div>
 				<div
@@ -207,9 +210,9 @@
 						'border-b border-borderLight last:border-none flex items-center h-[44px] px-4 cursor-pointer min-w-[150px] hover:bg-bg active:bg-borderLight whitespace-nowrap'
 					)}
 				>
-					<div class={cn('w-3 mr-3 text-primaryOrange')}><OptionsIcon /></div>
+					<div class={cn('w-3 mr-3 text-primary')}><OptionsIcon /></div>
 
-					<span>Reserve/give options<span class="text-textLight ml-1">to employees</span></span>
+					<span>Employee Options</span>
 				</div>
 
 				<div
@@ -225,11 +228,11 @@
 						!showExit && 'pointer-events-none'
 					)}
 				>
-					<div class={cn('w-3 mr-3 text-primaryOrange', !showExit && 'opacity-30')}>
+					<div class={cn('w-3 mr-3 text-primary', !showExit && 'opacity-30')}>
 						<ExitIcon />
 					</div>
 					<span class={cn(!showExit && 'opacity-30')}
-						>Exit<span class="text-textLight ml-1">/ Sell the startup</span></span
+						>Exit<span class="text-textLight ml-1">/ Sell the venture</span></span
 					>
 				</div>
 			</div>

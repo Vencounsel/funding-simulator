@@ -10,7 +10,7 @@
 				amount: 100_000,
 				discount: 0,
 				mfn: true,
-				name: 'Safe 1',
+				name: 'SAFE 1',
 				proRata: true,
 				valCap: 1_000_000
 			}
@@ -26,7 +26,9 @@
 				name: 'Series A',
 				proRata: true,
 				valuation: 10_000_000,
-				options: 10
+				options: 10,
+				participations: [],
+				monthsToRound: 12
 			}
 		];
 	};
@@ -42,6 +44,7 @@
 				valCap: 1_000_000,
 				discount: 0,
 				proRata: true,
+				mfn: true,
 				name: 'Note 1'
 			}
 		];
@@ -49,7 +52,7 @@
 </script>
 
 <div class="rounded-xl bg-white border-[3px] border-borderLight">
-	<div class="p-4 text-center border-b-2 border-borderLight text-primaryOrange">Add funding</div>
+	<div class="p-4 text-center border-b-2 border-borderLight text-primary">Add Funding 💰</div>
 
 	<div class="flex gap-6 p-10 pb-4 pt-8 flex-wrap justify-center">
 		<Button class="w-[130px] h-[80px]" onclick={addSafe}>SAFE</Button>

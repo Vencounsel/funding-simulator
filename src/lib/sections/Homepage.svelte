@@ -45,9 +45,18 @@
 <div
 	out:box={{ duration: 300, scale: 25 }}
 	in:box={{ delay: 100, duration: 300, scale: 25 }}
-	class="will-change-transform origin-top h-full min-h-screen flex flex-col max-w-[400px] mx-auto absolute w-full left-[50%] -translate-x-[50%] top-0"
+	class="will-change-transform origin-top h-full min-h-screen flex flex-col max-w-[400px] mx-auto absolute w-full left-[50%] -translate-x-[50%] top-0 max-sm:px-4"
 >
-	<div class="text-xl opacity-50 text-textLight py-10 text-center">Founder Equity & Fundraising Calculator by VenCounsel</div>
+	<div class="py-10 text-center max-sm:py-8">
+		<div class="animate-fade-in-up">
+			<span
+				class="hero-glow text-4xl font-semibold tracking-tight gradient-text-animated max-sm:text-3xl"
+				data-text="Venture Finance Sim"
+			>Venture Finance Sim</span>
+		</div>
+		<div class="text-xs text-textLight mt-2 animate-fade-in-up animation-delay-100">by VenCounsel</div>
+		<div class="text-sm text-textLight mt-3 opacity-70 animate-fade-in-up animation-delay-200 max-w-[300px] mx-auto">See how fundraising impacts your equity—from founding to exit.</div>
+	</div>
 	{#if parsedSims.length > 0}
 		<div class="text-xs py-7 text-center">Previous simulations</div>
 
@@ -75,13 +84,14 @@
 		</div>
 	{/if}
 
-	<div class="flex-1 flex items-center pb-40 justify-center">
+	<div class="flex-1 flex items-center pb-40 justify-center animate-fade-in-up animation-delay-300">
 		<Button
+			class="gradient-btn text-lg px-6 py-4"
 			onclick={() => {
 				resetData();
 				$simId = generateId();
 				$loadedData = true;
-			}}>New simulation</Button
+			}}>Start Sim 🚀</Button
 		>
 	</div>
 </div>

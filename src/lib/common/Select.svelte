@@ -20,7 +20,7 @@
 >
 	<div
 		class={cn(
-			' flex items-center justify-center bg-primaryOrange w-4 h-4 rounded-[5px]',
+			' flex items-center justify-center bg-primary w-4 h-4 rounded-[5px]',
 
 			!checked && 'bg-borderLight group-hover/select:bg-borderDark'
 		)}

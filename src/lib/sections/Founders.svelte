@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { box, cn } from '$lib';
-	import Button from '$lib/common/Button.svelte';
 	import Input from '$lib/common/Input.svelte';
 	import { companyName, founders } from '$lib/store';
 	import { flip } from 'svelte/animate';
@@ -38,8 +37,8 @@
 	};
 </script>
 
-<div class="flex flex-col items-center">
-	<div class="pt-10 mb-20">
+<div class="flex flex-col items-center max-sm:px-4">
+	<div class="pt-20 mb-20 max-sm:pt-14 max-sm:mb-10">
 		<!-- svelte-ignore a11y-autofocus -->
 		<input
 			autofocus={window.innerWidth >= 640}
@@ -52,15 +51,15 @@
 					e.currentTarget.blur();
 				}
 			}}
-			class="w-[250px] text-primaryOrange focus:border-blue bg-transparent border-b-2 border-borderDark hover:border-borderDarkHover placeholder:text-textLight text-center py-3"
-			placeholder="Unnamed startup"
+			class="w-[250px] text-primary focus:border-blue bg-transparent border-b-2 border-borderDark hover:border-borderDarkHover placeholder:text-textLight text-center py-3"
+			placeholder="Unnamed venture"
 		/>
 	</div>
 	<div class="flex flex-col items-center">
-		<div class=" text-xl">Founders</div>
-		<div class="text-textLight text-xl mb-10">and their equity</div>
+		<div class=" text-xl">Founder Equity</div>
+		<div class="text-textLight text-xl mb-10">Initial Ownership</div>
 
-		<div class="flex gap-4 flex-wrap justify-center" id="founders">
+		<div class="flex gap-4 flex-wrap justify-center max-sm:gap-2 max-sm:max-w-[360px]" id="founders">
 			{#each $founders as founder, fIndex (founder.id)}
 				<div
 					class="flex flex-col align-top h-[140px] !transition-none"
@@ -114,9 +113,13 @@
 			{/each}
 		</div>
 
-		<div class="mt-6">
-			<Button onclick={addFounder}>Add founder</Button>
-		</div>
+		<button
+			on:click={addFounder}
+			class="mt-6 text-xs text-textLight hover:text-primary flex items-center gap-1 py-2 transition-colors opacity-60 hover:opacity-100"
+		>
+			<span class="text-sm">+</span>
+			<span>Add Co-Founder</span>
+		</button>
 	</div>
 	<div class="h-[30px] my-2 flex flex-col items-center gap-1 justify-end text-xs text-dangerLight">
 		{#if !addsUpTo100}

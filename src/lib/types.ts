@@ -30,6 +30,7 @@ export type ConvertibleNote = {
 	valCap: number;          // Valuation cap
 	discount: number;        // Discount percentage
 	proRata: boolean;        // Pro-rata rights
+	mfn: boolean;            // Most Favored Nation provision
 	name: string;
 };
 
@@ -40,13 +41,15 @@ export type PricedRound = {
 	options: number;
 	amount: number;
 	name: string;
-	participations: string[]
+	participations: string[];
+	monthsToRound: number;  // Months from start until this round (for convertible note interest calculation)
 };
 
 export type Options = {
 	type: 'options';
 	amount: number;
 	reserved: number;
+	grantName: string;  // Name of recipient (e.g., "CTO", "Advisor 1") - empty string means generic "Employees"
 };
 
 // types

@@ -3,7 +3,7 @@
 	import { onMount } from 'svelte';
 	import IMask, { InputMask } from 'imask';
 
-	export let type: 'percent' | 'amount' = 'amount';
+	export let type: 'percent' | 'amount' | 'number' = 'amount';
 	export let width = '100';
 
 	const AMOUNT_MASK = {
@@ -30,7 +30,7 @@
 		max: 100
 	};
 
-	$: currentMask = type === 'amount' ? AMOUNT_MASK : PERCENT_MASK;
+	$: currentMask = type === 'percent' ? PERCENT_MASK : AMOUNT_MASK;
 
 	let _class: string = '';
 	let inputRef: HTMLInputElement;
@@ -107,6 +107,6 @@
 			type === 'percent' ? 'right-[12px]' : 'left-[12px]'
 		)}
 	>
-		{type === 'percent' ? '%' : '$'}
+		{type === 'percent' ? '%' : type === 'number' ? '#' : '$'}
 	</div>
 </div>

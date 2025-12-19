@@ -6,8 +6,8 @@ export default {
       colors: {
         bg: 'var(--background-color)',
         textDark: 'var(--text-dark)',
-        textLight: '#bcbcbc',
-        primaryOrange: 'var(--orange)',
+        textLight: 'var(--text-light)',
+        primary: 'var(--primary)',
         borderLight: '#EEEEE2',
         borderDark: 'var(--border-dark)',
         borderDarkHover: 'var(--border-dark-hover)',

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { cn } from '$lib';
+	import { cn, formatAmount } from '$lib';
 	import {
 		AVAILABLE_OPTIONS_LABEL,
 		EMPLOYEE_OPTIONS_LABEL,
@@ -9,6 +9,7 @@
 	import { get } from 'svelte/store';
 
 	export let position: number;
+	export let valuation: number | undefined = undefined;
 
 	$: lastTable = $tables[position];
 
@@ -23,6 +24,11 @@
 		const total = getTableTotalShares(table);
 		const previousTotal = getTableTotalShares(lastTable);
 		return (shares / total) * 100 - (previousShares / previousTotal) * 100;
+	};
+
+	$: getValue = (equityPercent: number) => {
+		if (!valuation) return null;
+		return (equityPercent / 100) * valuation;
 	};
 
 	$: lines = Object.keys(table).map((k) => ({
@@ -43,8 +49,17 @@
 	$: optionsLines = lines.filter((l) => l.type === 'options');
 </script>
 
-<div class="flex flex-col items-center z-[1] w-max bg-bg pl-4 -ml-4">
+<div class="flex flex-col items-center z-[1] w-max bg-bg pl-4 -ml-4 max-sm:pl-0 max-sm:-ml-0 max-sm:w-full max-sm:max-w-[340px]">
 	<div class="flex flex-col text-sm rounded-lg border-[3px] p-3 py-2 border-borderLight">
+		<!-- Column Headers -->
+		<div class="flex text-[10px] gap-6 justify-between px-2 -mx-2 pb-1 mb-1 border-b border-borderLight text-textLight uppercase tracking-wide">
+			<div class="shrink-0 min-w-[70px]"></div>
+			<div>Equity</div>
+			{#if valuation}
+				<div class="w-[70px] text-right">Value</div>
+			{/if}
+			<div class="w-[45px] text-right">Chg</div>
+		</div>
 		{#each foundersLines as line}
 			<div
 				class="group/line hover:bg-borderLight p-0.5 px-2 -mx-2 flex text-xs gap-6 justify-between border-borderLight last:border-none"
@@ -52,15 +67,19 @@
 				<div
 					class={cn(
 						'shrink-0 min-w-[70px]',
-						line.label === 'You' ? 'text-primaryOrange' : 'text-textDark'
+						line.label === 'You' ? 'text-primary' : 'text-textDark'
 					)}
 				>
 					{line.label}
 				</div>
-				<div class={cn(line.label === 'You' ? 'text-primaryOrange' : 'text-textDark')}>
+				<div class={cn(line.label === 'You' ? 'text-primary' : 'text-textDark')}>
 					{line.equity.toFixed(1)}%
 				</div>
-
+				{#if valuation}
+					<div class={cn('w-[70px] text-right', line.label === 'You' ? 'text-primary' : 'text-textDark')}>
+						{formatAmount(Math.round(getValue(line.equity) || 0))}
+					</div>
+				{/if}
 				<div
 					class={cn(
 						'w-[45px] text-right text-red-600 opacity-40 group-hover/line:opacity-100',
@@ -96,7 +115,11 @@
 				<div class="text-textDark">
 					{line.equity.toFixed(1)}%
 				</div>
-
+				{#if valuation}
+					<div class="w-[70px] text-right text-textDark">
+						{formatAmount(Math.round(getValue(line.equity) || 0))}
+					</div>
+				{/if}
 				<div
 					class={cn(
 						'w-[45px] text-right text-red-600 opacity-40 group-hover/line:opacity-100',
@@ -132,7 +155,11 @@
 				<div class="text-textDark">
 					{line.equity.toFixed(1)}%
 				</div>
-
+				{#if valuation}
+					<div class="w-[70px] text-right text-textDark">
+						{formatAmount(Math.round(getValue(line.equity) || 0))}
+					</div>
+				{/if}
 				<div
 					class={cn(
 						'w-[45px] text-right text-red-600 opacity-40 group-hover/line:opacity-100',

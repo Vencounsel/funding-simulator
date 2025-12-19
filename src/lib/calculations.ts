@@ -92,8 +92,12 @@ export const getSafes = (firstPricedRound: PricedRound, totalShares: number) => 
 };
 
 // Calculate accrued interest for a convertible note (simple interest)
-export const getConvertibleNoteAccruedAmount = (note: ConvertibleNote): number => {
-	const accruedInterest = note.amount * (note.interestRate / 100) * (note.term / 12);
+// If monthsToConversion is provided, use min(monthsToConversion, term) for interest calculation
+export const getConvertibleNoteAccruedAmount = (note: ConvertibleNote, monthsToConversion?: number): number => {
+	const effectiveMonths = monthsToConversion !== undefined
+		? Math.min(monthsToConversion, note.term)
+		: note.term;
+	const accruedInterest = note.amount * (note.interestRate / 100) * (effectiveMonths / 12);
 	return note.amount + accruedInterest;
 };
 
@@ -101,7 +105,8 @@ export const getConvertibleNoteAccruedAmount = (note: ConvertibleNote): number =
 export const getConvertibleNotesValuations = (firstPricedRound: PricedRound) =>
 	(get(_events).filter((e) => e.type === 'convertible') as ConvertibleNote[]).map((note) => {
 		let valuation = firstPricedRound.valuation;
-		const totalAmount = getConvertibleNoteAccruedAmount(note);
+		// Use monthsToRound from priced round to calculate interest (converts at earlier of priced round or maturity)
+		const totalAmount = getConvertibleNoteAccruedAmount(note, firstPricedRound.monthsToRound);
 
 		if (note.valCap && note.discount)
 			valuation = Math.min(note.valCap, firstPricedRound.valuation * (1 - note.discount / 100));
@@ -116,13 +121,27 @@ export const getConvertibleNotesValuations = (firstPricedRound: PricedRound) =>
 		} as ConvertibleNote & { valuation: number; totalAmount: number };
 	});
 
+// Apply MFN provision to convertible notes (similar to SAFEs)
+export const getConvertibleNotesWithMFN = (notes: (ConvertibleNote & { valuation: number; totalAmount: number })[]) =>
+	notes.map((note, noteIndex) => {
+		if (!note.mfn) return note;
+		const searchList = notes.slice(noteIndex);
+		const highestValuation = searchList.reduce((max, current) => {
+			return current.valuation <= max ? current.valuation : max;
+		}, note.valuation);
+		return {
+			...note,
+			valuation: highestValuation
+		};
+	});
+
 // Get convertible notes as shares at first priced round
 export const getConvertibleNotes = (firstPricedRound: PricedRound, totalShares: number) => {
 	const notesTables: CapTable = {};
 
-	const notesWithValuations = getConvertibleNotesValuations(firstPricedRound);
+	const notesWithMFN = getConvertibleNotesWithMFN(getConvertibleNotesValuations(firstPricedRound));
 
-	const totalNotesDilution = notesWithValuations.reduce((prev, curr) => {
+	const totalNotesDilution = notesWithMFN.reduce((prev, curr) => {
 		return prev + curr.totalAmount / curr.valuation;
 	}, 0);
 
@@ -134,7 +153,7 @@ export const getConvertibleNotes = (firstPricedRound: PricedRound, totalShares: 
 
 	const newTotal = totalShares / (1 - totalSafesDilution - totalNotesDilution);
 
-	notesWithValuations.forEach((note) => {
+	notesWithMFN.forEach((note) => {
 		notesTables[note.name] = newTotal * (note.totalAmount / note.valuation);
 	});
 
@@ -146,13 +165,13 @@ export const getSafesWithNotes = (firstPricedRound: PricedRound, totalShares: nu
 	const safesTables: CapTable = {};
 
 	const safesWithMFN = getSafesWithMFN(getSafesValuations(firstPricedRound));
-	const notesWithValuations = getConvertibleNotesValuations(firstPricedRound);
+	const notesWithMFN = getConvertibleNotesWithMFN(getConvertibleNotesValuations(firstPricedRound));
 
 	const totalSafesDilution = safesWithMFN.reduce((prev, curr) => {
 		return prev + curr.amount / curr.valuation;
 	}, 0);
 
-	const totalNotesDilution = notesWithValuations.reduce((prev, curr) => {
+	const totalNotesDilution = notesWithMFN.reduce((prev, curr) => {
 		return prev + curr.totalAmount / curr.valuation;
 	}, 0);
 
@@ -214,7 +233,8 @@ const getOptions = ({
 		const target = event.amount / 100;
 		if (target <= parseFloat((((current[AVAILABLE_OPTIONS_LABEL] || 0) + (options[AVAILABLE_OPTIONS_LABEL] || 0)) / total).toFixed(2))) {
 			const sharesToGrant = (total + (options[AVAILABLE_OPTIONS_LABEL] || 0)) * target;
-			options[EMPLOYEE_OPTIONS_LABEL] = (options[EMPLOYEE_OPTIONS_LABEL] || 0) + sharesToGrant;
+			const grantLabel = event.grantName || EMPLOYEE_OPTIONS_LABEL;
+			options[grantLabel] = (options[grantLabel] || 0) + sharesToGrant;
 			options[AVAILABLE_OPTIONS_LABEL] = (options[AVAILABLE_OPTIONS_LABEL] || 0) - sharesToGrant;
 		}
 	}

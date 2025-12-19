@@ -100,7 +100,8 @@ const getEventsFromString = (eventsString: string): Event[] => {
 				valuation: parseInt(es.split(',')[3]),
 				options: parseFloat(es.split(',')[4]),
 				proRata: es.split(',')[5] === '1',
-				participations: (es.split(',')[6]?.split('+') ?? []).filter((e) => !!e)
+				participations: (es.split(',')[6]?.split('+') ?? []).filter((e) => !!e),
+				monthsToRound: parseInt(es.split(',')[7]) || 12
 			};
 			return event;
 		}
@@ -113,14 +114,16 @@ const getEventsFromString = (eventsString: string): Event[] => {
 				discount: parseFloat(es.split(',')[4]),
 				interestRate: parseFloat(es.split(',')[5]),
 				term: parseInt(es.split(',')[6]),
-				proRata: es.split(',')[7] === '1'
+				proRata: es.split(',')[7]?.split('')[0] === '1',
+				mfn: es.split(',')[7]?.split('')[1] === '1'
 			};
 			return event;
 		}
 		const event: Options = {
 			amount: parseFloat(es.split(',')[1]),
 			type: 'options',
-			reserved: parseFloat(es.split(',')[2])
+			reserved: parseFloat(es.split(',')[2]),
+			grantName: es.split(',')[3] || ''
 		};
 		return event;
 	});
@@ -143,13 +146,13 @@ const getEventsString = (events: Event[]): string => {
 				}`;
 			}
 			if (e.type === 'priced') {
-				return `p,${e.name},${e.amount},${e.valuation},${e.options || 0},${e.proRata ? '1' : '0'},${e.participations.join('+')}`;
+				return `p,${e.name},${e.amount},${e.valuation},${e.options || 0},${e.proRata ? '1' : '0'},${e.participations.join('+')},${e.monthsToRound || 12}`;
 			}
 			if (e.type === 'convertible') {
-				return `c,${e.name},${e.amount},${e.valCap},${e.discount},${e.interestRate},${e.term},${e.proRata ? '1' : '0'}`;
+				return `c,${e.name},${e.amount},${e.valCap},${e.discount},${e.interestRate},${e.term},${e.proRata ? '1' : '0'}${e.mfn ? '1' : '0'}`;
 			}
 			if (e.type === 'options') {
-				return `o,${e.amount},${e.reserved}`;
+				return `o,${e.amount},${e.reserved},${e.grantName || ''}`;
 			}
 		})
 		.join('_');

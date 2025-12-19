@@ -16,9 +16,9 @@
 </script>
 
 <div class="rounded-xl bg-white border-[3px] border-borderLight">
-	<div class="p-3 text-center border-b-2 border-borderLight text-lg text-primaryOrange">Exit</div>
+	<div class="p-3 text-center border-b-2 border-borderLight text-lg text-primary">Exit 💸</div>
 	<div class="px-10 pt-7 pb-8 flex flex-col items-center">
-		<div class="text-sm mb-3">Sell the startup for ...</div>
+		<div class="text-sm mb-3">Sell the venture for ...</div>
 		<Input
 			autofocus
 			value={amount}
@@ -40,10 +40,11 @@
 				launchConfetti();
 			}}
 			class={cn(
-				'mt-7 bg-primaryOrange text-white border-none rounded-lg py-2 px-3 primary-button',
+				'mt-7 bg-primary text-white border-none rounded-lg py-2 px-3 primary-button',
 				amount < lastPricedRound.valuation && 'opacity-50 pointer-events-none'
-			)}>Sell it!</Button
+			)}>Sell it! 🎉</Button
 		>
+		<div class="text-[10px] text-textLight mt-2 opacity-60">Press Enter ↵ to confirm</div>
 		{#if amount < lastPricedRound.valuation}
 			<div class="text-[11px] text-red-500 mt-3 -mb-3 text-center w-[190px]">
 				Sale price must be higher than last valuation ({formatAmount(lastPricedRound.valuation)}).

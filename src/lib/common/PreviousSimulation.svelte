@@ -33,13 +33,13 @@
 				{name}
 			</div>
 		{:else}
-			<div class="text-textLight text-sm">Unnamed startup</div>
+			<div class="text-textLight text-sm">Unnamed venture</div>
 		{/if}
 
 		{#if totalRaised > 0 || exit}
 			<div>
 				{#if totalRaised > 0}
-					Raised {formatAmount(totalRaised)}
+					Raise {formatAmount(totalRaised)}
 				{/if}
 
 				{#if exit}

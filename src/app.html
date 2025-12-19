@@ -2,23 +2,40 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<link rel="icon" href="%sveltekit.assets%/favicon.png" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="icon" href="%sveltekit.assets%/favicon.svg" type="image/svg+xml" />
+		<link rel="icon" href="%sveltekit.assets%/favicon.png" type="image/png" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+		<meta name="theme-color" content="#F5F5F5" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+		<meta name="mobile-web-app-capable" content="yes" />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link
 			href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap"
 			rel="stylesheet"
 		/>
-		<title>Founder Equity & Fundraising Calculator by VenCounsel</title>
-		<meta name="title" content="Founder Equity & Fundraising Calculator by VenCounsel">
+		<title>Venture Finance Sim by VenCounsel</title>
+		<meta name="title" content="Venture Finance Sim by VenCounsel">
 		<meta name="description" content="Add founders and investors, SAFEs and priced rounds, calculate dilution, and forecast exit valuation.">
-		<meta name="keywords" content="funding, fundraising, calculator, equity, startup, seed, series a, exit, acquisition, safe, priced round, equity, dilution, startup finance, startup equity, startup funding, startup fundraising, startup fundraising calculator, startup funding calculator, startup dilution calculator, startup finance calculator, startup exit calculator, startup funding calculator, startup dilution calculator, startup exit calculator">
+		<meta name="keywords" content="funding, fundraising, calculator, equity, venture, seed, series a, exit, acquisition, safe, priced round, equity, dilution, venture finance, venture equity, venture funding, venture fundraising, venture fundraising calculator, venture funding calculator, venture dilution calculator, venture finance calculator, venture exit calculator">
 		<meta name="robots" content="index, follow">
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<meta name="language" content="English">
 
+		<!-- Open Graph / Facebook -->
+		<meta property="og:type" content="website">
+		<meta property="og:url" content="https://funding.vencounsel.com/">
+		<meta property="og:title" content="Venture Finance Sim by VenCounsel">
+		<meta property="og:description" content="See how fundraising impacts your equity—from founding to exit.">
+		<meta property="og:image" content="https://funding.vencounsel.com/og-image.png">
 
+		<!-- Twitter -->
+		<meta property="twitter:card" content="summary_large_image">
+		<meta property="twitter:url" content="https://funding.vencounsel.com/">
+		<meta property="twitter:title" content="Venture Finance Sim by VenCounsel">
+		<meta property="twitter:description" content="See how fundraising impacts your equity—from founding to exit.">
+		<meta property="twitter:image" content="https://funding.vencounsel.com/og-image.png">
 
 		%sveltekit.head%
 		<script>
@@ -26,7 +43,7 @@
 			posthog.init('phc_jag55wticXHIdEqFkJCQWvwyy3rRnfR11jiaYYgqUD1',{api_host:'https://app.posthog.com'})
 	</script>
 	</head>
-	<body data-sveltekit-preload-data="hover">
+	<body data-sveltekit-preload-data="hover" class="grain-overlay">
 		<div style="display: contents">%sveltekit.body%</div>
 	</body>
 </html>

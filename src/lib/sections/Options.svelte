@@ -62,8 +62,8 @@
 				<FloatingTable position={index} />
 			</div>
 			<div class="text-sm h-12 text-textLight flex items-center justify-center gap-1.5">
-				Previous available option pool is
-				<span class="text-primaryOrange">{parseFloat(Math.abs(available).toFixed(1))}% </span>
+				Previous available Option Pool is
+				<span class="text-primary">{parseFloat(Math.abs(available).toFixed(1))}% </span>
 				<span class="max-sm:hidden">of all shares</span>
 			</div>
 			<div class="flex w-full max-sm:flex-col">
@@ -73,7 +73,7 @@
 						!data.reserved && 'opacity-50'
 					)}
 				>
-					<div class="mb-1">Reserve options</div>
+					<div class="mb-1">Reserve Options</div>
 					<div class="text-textLight text-sm">Increase available pool</div>
 					<Input
 						autofocus
@@ -95,11 +95,18 @@
 						!data.amount && 'opacity-50'
 					)}
 				>
-					<div class="mb-1">Grant options</div>
-					<div class="text-textLight text-sm">Give to employees</div>
+					<div class="mb-1">Employee Options</div>
+					<div class="text-textLight text-sm mb-3">Give to key personnel</div>
+					<input
+						placeholder="Recipient (e.g. CTO, Advisor)"
+						value={data.grantName}
+						on:input={(e) => {
+							data.grantName = e.currentTarget.value;
+						}}
+						class="text-sm text-center w-[180px] px-3 py-2 rounded-lg border-2 border-borderLight bg-bg hover:bg-borderLight focus:bg-borderLight focus:outline-none mb-3"
+					/>
 					<Input
 						selectOnFocus
-						class="mt-5 mb-1"
 						type="percent"
 						value={data.amount}
 						onchange={(value) => {
@@ -112,8 +119,8 @@
 				</div>
 			</div>
 			<div class="text-sm h-12 text-textLight flex items-center justify-center gap-1.5">
-				Option pool that will remain is
-				<span class="text-primaryOrange">{parseFloat(Math.abs(remaining).toFixed(1))}%</span>
+				Option Pool that will remain is
+				<span class="text-primary">{parseFloat(Math.abs(remaining).toFixed(1))}%</span>
 			</div>
 		</div>
 	{:else}
@@ -126,14 +133,14 @@
 				<span class="mr-2 text-textLight max-sm:block max-sm:text-center max-sm:mb-1">Options</span>
 				{#if data.reserved}
 					Reserve
-					<span class="text-primaryOrange">{parseFloat(data.reserved.toFixed(1))}%</span>
+					<span class="text-primary">{parseFloat(data.reserved.toFixed(1))}%</span>
 				{/if}
 				{#if data.reserved && data.amount}
 					,
 				{/if}
 				{#if data.amount}
 					Give
-					<span class="text-primaryOrange">{parseFloat(data.amount.toFixed(1))}%</span> to employees
+					<span class="text-primary">{parseFloat(data.amount.toFixed(1))}%</span> to {data.grantName || 'employees'}
 				{/if}
 			</div>
 		</div>

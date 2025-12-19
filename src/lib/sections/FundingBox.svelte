@@ -25,6 +25,8 @@
 
 	$: isFirstPriced = $events.slice(0, index).filter((e) => e.type === 'priced').length === 0;
 
+	$: hasConvertibleNotesBefore = $events.slice(0, index).some((e) => e.type === 'convertible');
+
 	$: previousInvestorsWithProRata = (
 		$events.slice(0, index).filter((e) => {
 			if (e.type === 'options' || !e.proRata) return false;
@@ -54,9 +56,9 @@
 	const getSafeType = (data: Safe) => {
 		let res = '';
 		if (data.valCap && data.discount) {
-			res = 'Valuation cap & Discount';
+			res = 'Valuation Cap & Discount';
 		} else if (data.valCap && !data.discount) {
-			res = 'Valuation cap';
+			res = 'Valuation Cap';
 		} else if (!data.valCap && data.discount) {
 			res = 'Discount';
 		} else {
@@ -75,11 +77,15 @@
 		if (data.valCap && data.discount) {
 			res = 'Cap & Discount';
 		} else if (data.valCap && !data.discount) {
-			res = 'Valuation cap';
+			res = 'Valuation Cap';
 		} else if (!data.valCap && data.discount) {
 			res = 'Discount';
 		} else {
 			res = 'Uncapped';
+		}
+
+		if (data.mfn) {
+			res += ' (with MFN)';
 		}
 
 		res += ` • ${data.interestRate}% interest • ${data.term}mo term`;
@@ -140,6 +146,7 @@
 		proratas: number;
 		proratasPercent: number;
 		safes: number;
+		notes: number;
 		options: number;
 	} | null = null;
 
@@ -184,7 +191,8 @@
 				investorsPercent: (investorNewShares / currentTotal) * 100,
 				proratas: getTableTotalShares(proRatas) * pricePerShare,
 				proratasPercent: (getTableTotalShares(proRatas) / currentTotal) * 100,
-				safes: (getTableTotalShares(safesAndNotes) / currentTotal) * 100,
+				safes: (getTableTotalShares(safes) / currentTotal) * 100,
+				notes: (getTableTotalShares(notes) / currentTotal) * 100,
 				options: (optionsNewShares / currentTotal) * 100
 			};
 		}
@@ -192,6 +200,7 @@
 
 	$: showOptionsLine = dilutions && dilutions.options > 0;
 	$: showSafesLine = dilutions && dilutions.safes > 0;
+	$: showNotesLine = dilutions && dilutions.notes > 0;
 
 	$: participatingProRatas =
 		(data.type === 'priced' &&
@@ -199,14 +208,14 @@
 		[];
 </script>
 
-<div class="group relative flex flex-col items-center h-[120px] __event max-sm:h-[140px]">
+<div class="group relative flex flex-col items-center h-[105px] __event max-sm:h-[140px]">
 	<div
 		class={cn(
 			'absolute -right-[10px] top-[calc(50%_+_1.5px)] -translate-y-[50%] translate-x-[100%] group-hover:block hidden max-sm:group-hover:hidden ',
 			show && 'hidden'
 		)}
 	>
-		<FloatingTable position={index} />
+		<FloatingTable position={index} valuation={data.type === 'priced' ? data.valuation : undefined} />
 	</div>
 	{#if show}
 		<div
@@ -218,7 +227,7 @@
 			<div
 				class="absolute right-[0] top-[calc(50%_+_11px)] -translate-y-[50%] translate-x-[calc(100%_+_20px)] max-sm:hidden"
 			>
-				<FloatingTable position={index} />
+				<FloatingTable position={index} valuation={data.type === 'priced' ? data.valuation : undefined} />
 			</div>
 			<div class="bg-bg flex justify-between items-center h-[54px] px-8 gap-4 rounded-t-2xl">
 				<input
@@ -232,12 +241,12 @@
 					}}
 					on:blur={handleNameChange}
 					class={cn(
-						'bg-bg flex-1 block -ml-3 cursor-pointer with-focus-ring border border-transparent w-fit text-primaryOrange text-lg hover:bg-borderLight focus:bg-bg p-1 px-3 rounded-lg outline-none',
+						'bg-bg flex-1 block -ml-3 cursor-pointer with-focus-ring border border-transparent w-fit text-primary text-lg hover:bg-borderLight focus:bg-bg p-1 px-3 rounded-lg outline-none',
 						sameNameError && 'border border-red-500'
 					)}
 				/>
 				<div class="text-textLight text-sm">
-					{data.type === 'priced' ? 'Priced round / Equity' : data.type === 'convertible' ? 'Convertible Note' : 'Post-money Safe'}
+					{data.type === 'priced' ? 'Priced Round / Equity' : data.type === 'convertible' ? 'Convertible Note' : 'Post-Money SAFE'}
 				</div>
 			</div>
 
@@ -306,6 +315,30 @@
 								}}
 							/>
 						</div>
+						{#if isFirstPriced && hasConvertibleNotesBefore}
+						<div>
+							<div
+								class="text-center mb-3"
+								use:tippy={{
+									maxWidth: 220,
+									content:
+										'Months from start until this round. Used to calculate convertible note interest (converts at earlier of this round or note maturity).',
+									arrow: false
+								}}
+							>
+								Months
+							</div>
+							<Input
+								width="70"
+								type="number"
+								value={data.type === 'priced' ? data.monthsToRound : undefined}
+								preventEmpty
+								onchange={(value) => {
+									data.type === 'priced' && (data.monthsToRound = parseInt(value));
+								}}
+							/>
+						</div>
+						{/if}
 					{:else if data.type === 'safe'}
 						<div>
 							<div class="text-center mb-3">Amount</div>
@@ -325,7 +358,7 @@
 									!data.valCap && 'text-textLight'
 								)}
 							>
-								Valuation cap
+								Valuation Cap
 							</div>
 							<Input
 								width="187"
@@ -374,7 +407,7 @@
 									!data.valCap && 'text-textLight'
 								)}
 							>
-								Valuation cap
+								Valuation Cap
 							</div>
 							<Input
 								width="140"
@@ -438,6 +471,7 @@
 							</div>
 							<Input
 								width="70"
+								type="number"
 								value={data.term}
 								preventEmpty
 								onchange={(value) => {
@@ -448,13 +482,13 @@
 					{/if}
 				</div>
 				<div class="flex justify-center max-sm:flex-col max-sm:items-center">
-					{#if data.type === 'safe'}
+					{#if data.type === 'safe' || data.type === 'convertible'}
 						<div
 							use:tippy={{
 								arrow: false,
 								maxWidth: 220,
 								content:
-									'Most favored nation: If a future safe has a better deal (lower valuation), this safe gets the same.'
+									'Most favored nation: If a future safe or note has a better deal (lower valuation), this one gets the same.'
 							}}
 						>
 							<Select bind:checked={data.mfn} class="mt-5 " label="MFN provision" />
@@ -469,7 +503,7 @@
 									'This investor will have the right to invest in future rounds to keep their ownership % constant'
 							}}
 						>
-							<Select bind:checked={data.proRata} class="mt-5 max-sm:mt-2" label="Pro-rata rights" />
+							<Select bind:checked={data.proRata} class="mt-5 max-sm:mt-2" label="Pro-Rata Rights" />
 						</div>
 					{/if}
 				</div>
@@ -481,13 +515,23 @@
 						class="bg-bg flex items-center justify-center gap-4 py-5 h-[180px] rounded-b-2xl max-sm:flex-col max-sm:items-center max-sm:h-fit"
 					>
 						<div>
-							Total equity sold: <span class="text-primaryOrange mr-2"
+							Total equity sold: <span class="text-primary mr-2"
 								>{dilutions?.total.toFixed(1)}%</span
 							>
 						</div>
 						<div
 							class="text-xs flex flex-col justify-between gap-0 border-2 border-borderDark rounded-xl"
 						>
+							<!-- Column Headers -->
+							<div
+								class="px-3 py-1.5 flex items-center justify-between gap-4 border-b-2 border-borderDark text-[10px] text-textLight uppercase tracking-wide"
+							>
+								<div class="">Source</div>
+								<div class="flex">
+									<div class="w-[55px] text-right">Amt</div>
+									<div class="w-[55px] text-right">Dilution</div>
+								</div>
+							</div>
 							<div
 								class="px-3 py-2 flex items-center justify-between gap-4 border-b-2 border-borderDark last:border-none"
 							>
@@ -497,7 +541,7 @@
 										+{formatAmount(Math.ceil(dilutions?.investors || 0))}
 									</div>
 
-									<div class="w-[55px] text-right text-primaryOrange">
+									<div class="w-[55px] text-right text-primary">
 										-{dilutions?.investorsPercent.toFixed(1)}%
 									</div>
 								</div>
@@ -506,10 +550,22 @@
 								<div
 									class="px-3 py-2 flex items-center justify-between gap-4 border-b-2 border-borderDark last:border-none text-textDark"
 								>
-									<div class="">Safes conversion</div>
+									<div class="">SAFEs conversion</div>
 									<div class="flex">
-										<div class="w-[55px] text-right text-primaryOrange">
+										<div class="w-[55px] text-right text-primary">
 											-{dilutions?.safes.toFixed(1)}%
+										</div>
+									</div>
+								</div>
+							{/if}
+							{#if showNotesLine}
+								<div
+									class="px-3 py-2 flex items-center justify-between gap-4 border-b-2 border-borderDark last:border-none text-textDark"
+								>
+									<div class="">Notes conversion</div>
+									<div class="flex">
+										<div class="w-[55px] text-right text-primary">
+											-{dilutions?.notes.toFixed(1)}%
 										</div>
 									</div>
 								</div>
@@ -519,9 +575,9 @@
 								<div
 									class="px-3 py-2 flex items-center justify-between gap-4 border-b-2 border-borderDark last:border-none text-textDark"
 								>
-									<div class="">Options pool increase</div>
+									<div class="">Options Pool Increase</div>
 									<div class="flex">
-										<div class="w-[55px] text-right text-primaryOrange">
+										<div class="w-[55px] text-right text-primary">
 											-{dilutions?.options.toFixed(1)}%
 										</div>
 									</div>
@@ -539,15 +595,15 @@
 									{:else}
 										<div class="">
 											{participatingProRatas.length === 1
-												? `${participatingProRatas[0]} pro-rata `
-												: `${participatingProRatas.length} others (pro-rata)`}
+												? `${participatingProRatas[0]} Pro-Rata `
+												: `${participatingProRatas.length} others (Pro-Rata)`}
 										</div>
 										<div class="flex">
 											<div class="w-[55px] text-right text-green-600">
 												+{formatAmount(Math.ceil(dilutions?.proratas || 0))}
 											</div>
 
-											<div class="w-[55px] text-right text-primaryOrange">
+											<div class="w-[55px] text-right text-primary">
 												-{dilutions?.proratasPercent.toFixed(1)}%
 											</div>
 										</div>
@@ -575,7 +631,7 @@
 						class="hidden py-10 rounded-xl bg-bg w-full max-sm:flex flex-col items-center justify-center"
 					>
 						<div class="text-center text-textLight text-xs mb-3">Resulting cap table</div>
-						<FloatingTable position={index} />
+						<FloatingTable position={index} valuation={data.type === 'priced' ? data.valuation : undefined} />
 					</div>
 				{:else}
 					<div class="bg-bg h-[180px] flex gap-2 rounded-b-2xl max-sm:flex-col max-sm:h-fit">
@@ -607,7 +663,7 @@
 				{/if}
 			{:else if data.type === 'safe'}
 				<div class="bg-bg flex align-center justify-center py-5 rounded-b-2xl">
-					<span class="mr-3 text-textLight">Safe type</span>
+					<span class="mr-3 text-textLight">SAFE type</span>
 					<span>{getSafeType(data)}</span>
 				</div>
 				<div
