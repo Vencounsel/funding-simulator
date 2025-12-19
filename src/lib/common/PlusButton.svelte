@@ -4,9 +4,10 @@
 	import OptionsIcon from '$lib/icons/OptionsIcon.svelte';
 	import ExitIcon from '$lib/icons/ExitIcon.svelte';
 	import SafeIcon from '$lib/icons/SafeIcon.svelte';
+	import NoteIcon from '$lib/icons/NoteIcon.svelte';
 	import { events, exit } from '$lib/store';
 	import { onMount } from 'svelte';
-	import type { PricedRound, Safe } from '$lib/types';
+	import type { ConvertibleNote, PricedRound, Safe } from '$lib/types';
 
 	let ref: HTMLDivElement;
 
@@ -34,6 +35,25 @@
 				name,
 				proRata: false,
 				valCap: 2_000_000
+			},
+			...$events.slice(position)
+		];
+	};
+
+	const addConvertibleNote = () => {
+		showMenu = false;
+		const name = generateNameForEvent('convertible', position);
+		$events = [
+			...$events.slice(0, position),
+			{
+				type: 'convertible',
+				amount: 100_000,
+				interestRate: 5,
+				term: 18,
+				valCap: 2_000_000,
+				discount: 0,
+				proRata: false,
+				name
 			},
 			...$events.slice(position)
 		];
@@ -94,7 +114,8 @@
 	$: showExit =
 		$events.slice(0, position).some((e) => e.type === 'priced') && position === $events.length;
 	$: showSafe = !$events.slice(0, position).some((e) => e.type === 'priced');
-	$: showPriced = !$events.slice(position).some((e) => e.type === 'safe');
+	$: showNote = !$events.slice(0, position).some((e) => e.type === 'priced');
+	$: showPriced = !$events.slice(position).some((e) => e.type === 'safe' || e.type === 'convertible');
 </script>
 
 <div
@@ -149,6 +170,20 @@
 					</div>
 					<span class={cn(!showSafe && 'opacity-30')}
 						>Safe<span class="text-textLight ml-1">(Post-money)</span></span
+					>
+				</div>
+				<div
+					on:click={addConvertibleNote}
+					class={cn(
+						'border-b border-borderLight last:border-none flex items-center h-[44px] px-4 cursor-pointer min-w-[150px] hover:bg-bg active:bg-borderLight whitespace-nowrap',
+						!showNote && 'pointer-events-none'
+					)}
+				>
+					<div class={cn('w-3 mr-3 text-primaryOrange', !showNote && 'opacity-30')}>
+						<NoteIcon />
+					</div>
+					<span class={cn(!showNote && 'opacity-30')}
+						>Convertible note<span class="text-textLight ml-1">/ Debt</span></span
 					>
 				</div>
 				<div
