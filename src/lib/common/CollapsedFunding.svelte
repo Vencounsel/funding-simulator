@@ -2,17 +2,17 @@
 	import { box_reverse, cn, formatAmount } from '$lib';
 	import { events, tables } from '$lib/store';
 
-	import type { PricedRound, Safe } from '$lib/types';
+	import type { ConvertibleNote, PricedRound, Safe } from '$lib/types';
 
 	import DeleteIcon from '$lib/icons/DeleteIcon.svelte';
-	import { getSafesValuations, getSafesWithMFN, getTableTotalShares } from '$lib/calculations';
+	import { getSafesValuations, getSafesWithMFN, getConvertibleNotesValuations, getConvertibleNoteAccruedAmount, getTableTotalShares } from '$lib/calculations';
 
 	$: pricedRounds = $events.filter((e) => e.type === 'priced') as PricedRound[];
 	$: firstPricedRound = pricedRounds[0] || null;
 
-	export let data: PricedRound | Safe;
+	export let data: PricedRound | Safe | ConvertibleNote;
 	export let index: number;
-	const getOtherString = (data: PricedRound | Safe) => {
+	const getOtherString = (data: PricedRound | Safe | ConvertibleNote) => {
 		if (data.type === 'safe') {
 			if (data.mfn && !data.proRata) {
 				return 'MFN';
@@ -20,6 +20,10 @@
 				return 'Pro-rata';
 			} else if (data.proRata && data.mfn) {
 				return 'MFN, Pro-rata';
+			}
+		} else if (data.type === 'convertible') {
+			if (data.proRata) {
+				return 'Pro-rata';
 			}
 		} else {
 			if (data.proRata) {
@@ -52,6 +56,10 @@
 		(($events.filter((e) => e.type === 'priced') as PricedRound[])[0] || null)?.name ===
 			data.name && $events.filter((e) => e.type === 'safe').length > 0;
 
+	$: includingNotes =
+		(($events.filter((e) => e.type === 'priced') as PricedRound[])[0] || null)?.name ===
+			data.name && $events.filter((e) => e.type === 'convertible').length > 0;
+
 	$: getDilutedBy = () => {
 		const totalDilution =
 			((getTableTotalShares($tables[index + 1]) - getTableTotalShares($tables[index])) /
@@ -64,10 +72,11 @@
 		let included: string[] = [];
 		if (data.type === 'priced') {
 			includingSafes && included.push('Safes');
+			includingNotes && included.push('Notes');
 			data.options && included.push('options');
 
 			const proRatas = data.participations.filter((i) =>
-				($events.filter((e) => e.type !== 'options' && e.proRata) as (PricedRound | Safe)[])
+				($events.filter((e) => e.type !== 'options' && e.proRata) as (PricedRound | Safe | ConvertibleNote)[])
 					.map((e) => e.name)
 					.includes(i)
 			);
@@ -83,6 +92,8 @@
 			return `(incl. ${included[0]} & ${included[1]})`;
 		} else if (included.length === 3) {
 			return `(incl. ${included[0]}, ${included[1]} & ${included[2]})`;
+		} else if (included.length > 3) {
+			return `(incl. ${included.slice(0, 3).join(', ')} & more)`;
 		}
 		return '';
 	};
@@ -106,8 +117,30 @@
 		return res;
 	};
 
+	$: getConvertibleNoteLabel = () => {
+		if (data.type !== 'convertible') return '';
+		let res = '';
+
+		if (data.discount && !data.valCap) {
+			res += 'Disc.';
+		} else if (!data.discount && data.valCap) {
+			res += 'Cap';
+		} else if (!data.discount && !data.valCap) {
+			res += 'Uncapped';
+		} else if (data.discount && data.valCap) {
+			res += 'Cap & disc.';
+		}
+		res += ` • ${data.interestRate}% • ${data.term}mo`;
+		return res;
+	};
+
 	$: effectiveValuation = firstPricedRound
 		? getSafesWithMFN(getSafesValuations(firstPricedRound)).find((el) => el.name === data.name)
+				?.valuation || null
+		: null;
+
+	$: effectiveNoteValuation = firstPricedRound
+		? getConvertibleNotesValuations(firstPricedRound).find((el) => el.name === data.name)
 				?.valuation || null
 		: null;
 </script>
@@ -130,7 +163,9 @@
 				? 'Error: Duplicate name'
 				: data.type === 'priced'
 					? 'Priced round'
-					: 'Safe - ' + getSafeLabel()}
+					: data.type === 'convertible'
+						? 'Note - ' + getConvertibleNoteLabel()
+						: 'Safe - ' + getSafeLabel()}
 		</div>
 	</div>
 	<div
@@ -153,6 +188,12 @@
 				<div class="">{data.valCap ? formatAmount(data.valCap) : '-'}</div>
 			</div>
 		{/if}
+		{#if data.type === 'convertible'}
+			<div class="flex flex-col justify-between">
+				<div class="text-[11px] text-textLight">ValCap</div>
+				<div class="">{data.valCap ? formatAmount(data.valCap) : '-'}</div>
+			</div>
+		{/if}
 		{#if data.type === 'priced' && data.valuation}
 			<div class="flex flex-col justify-between">
 				<div class="text-[11px] text-textLight">Val (post)</div>
@@ -164,6 +205,12 @@
 			<div class="flex flex-col justify-between">
 				<div class="text-[11px] text-textLight">Disc.</div>
 				<div class="">{data.discount ? data.discount + '%' : '-'}</div>
+			</div>
+		{/if}
+		{#if data.type === 'convertible'}
+			<div class="flex flex-col justify-between">
+				<div class="text-[11px] text-textLight">Interest</div>
+				<div class="">{data.interestRate}%</div>
 			</div>
 		{/if}
 		{#if data.type === 'priced' && data.options}
@@ -178,10 +225,12 @@
 		</div>
 	</div>
 	<div class="text-xs p-3 text-center w-fit mx-auto text-textLight bg-bg">
-		{#if data.type !== 'safe'}
+		{#if data.type === 'priced'}
 			Diluted by {getDilutedBy()}% <span class="max-sm:hidden">{getIncludingMessage()}</span>
-		{:else if effectiveValuation}
+		{:else if data.type === 'safe' && effectiveValuation}
 			Effective valuation: {formatAmount(effectiveValuation)}
+		{:else if data.type === 'convertible' && effectiveNoteValuation}
+			Converts at: {formatAmount(getConvertibleNoteAccruedAmount(data))} @ {formatAmount(effectiveNoteValuation)} val
 		{/if}
 	</div>
 	<button

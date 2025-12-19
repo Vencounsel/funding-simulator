@@ -2,7 +2,7 @@
 	import { box, cn, formatAmount, selectContents } from '$lib';
 	import Input from '$lib/common/Input.svelte';
 	import Select from '$lib/common/Select.svelte';
-	import type { CapTable, PricedRound, Safe } from '$lib/types';
+	import type { CapTable, ConvertibleNote, PricedRound, Safe } from '$lib/types';
 
 	import { onMount } from 'svelte';
 	import CollapsedFunding from '$lib/common/CollapsedFunding.svelte';
@@ -12,12 +12,14 @@
 		AVAILABLE_OPTIONS_LABEL,
 		addTables,
 		getProRatas,
-		getSafes,
-		getTableTotalShares
+		getSafesWithNotes,
+		getConvertibleNotes,
+		getTableTotalShares,
+		getConvertibleNoteAccruedAmount
 	} from '$lib/calculations';
 	import tippy from 'svelte-tippy';
 
-	export let data: PricedRound | Safe;
+	export let data: PricedRound | Safe | ConvertibleNote;
 	export let index: number;
 	let show = false;
 
@@ -26,9 +28,9 @@
 	$: previousInvestorsWithProRata = (
 		$events.slice(0, index).filter((e) => {
 			if (e.type === 'options' || !e.proRata) return false;
-			if (e.type === 'safe' && !isFirstPriced) return false;
+			if ((e.type === 'safe' || e.type === 'convertible') && !isFirstPriced) return false;
 			return true;
-		}) as (PricedRound | Safe)[]
+		}) as (PricedRound | Safe | ConvertibleNote)[]
 	).map((i) => i.name);
 
 	$: sameNameError =
@@ -64,6 +66,23 @@
 		if (data.mfn) {
 			res += ' (with MFN)';
 		}
+
+		return res;
+	};
+
+	const getConvertibleNoteType = (data: ConvertibleNote) => {
+		let res = '';
+		if (data.valCap && data.discount) {
+			res = 'Cap & Discount';
+		} else if (data.valCap && !data.discount) {
+			res = 'Valuation cap';
+		} else if (!data.valCap && data.discount) {
+			res = 'Discount';
+		} else {
+			res = 'Uncapped';
+		}
+
+		res += ` • ${data.interestRate}% interest • ${data.term}mo term`;
 
 		return res;
 	};
@@ -134,20 +153,24 @@
 			const totalNewShares = currentTotal - previousTotal;
 
 			let safes: CapTable = {};
+			let notes: CapTable = {};
 			if (isFirstPriced) {
-				safes = getSafes(data, previousTotal);
+				safes = getSafesWithNotes(data, previousTotal);
+				notes = getConvertibleNotes(data, previousTotal);
 			}
+
+			const safesAndNotes = addTables(safes, notes);
 
 			const optionsNewShares =
 				(currentTable[AVAILABLE_OPTIONS_LABEL] || 0) -
 				(previousTable[AVAILABLE_OPTIONS_LABEL] || 0);
 
 			const proRatas = getProRatas({
-				current: addTables(previousTable, safes),
+				current: addTables(previousTable, safesAndNotes),
 				event: data,
-				newShares: totalNewShares - getTableTotalShares(safes) - optionsNewShares,
+				newShares: totalNewShares - getTableTotalShares(safesAndNotes) - optionsNewShares,
 				firstPricedRound: isFirstPriced,
-				total: previousTotal + getTableTotalShares(safes),
+				total: previousTotal + getTableTotalShares(safesAndNotes),
 				allEvents: $events.slice(0, index + 1)
 			});
 
@@ -161,7 +184,7 @@
 				investorsPercent: (investorNewShares / currentTotal) * 100,
 				proratas: getTableTotalShares(proRatas) * pricePerShare,
 				proratasPercent: (getTableTotalShares(proRatas) / currentTotal) * 100,
-				safes: (getTableTotalShares(safes) / currentTotal) * 100,
+				safes: (getTableTotalShares(safesAndNotes) / currentTotal) * 100,
 				options: (optionsNewShares / currentTotal) * 100
 			};
 		}
@@ -214,7 +237,7 @@
 					)}
 				/>
 				<div class="text-textLight text-sm">
-					{data.type === 'priced' ? 'Priced round / Equity' : 'Post-money Safe'}
+					{data.type === 'priced' ? 'Priced round / Equity' : data.type === 'convertible' ? 'Convertible Note' : 'Post-money Safe'}
 				</div>
 			</div>
 
@@ -283,15 +306,15 @@
 								}}
 							/>
 						</div>
-					{:else}
+					{:else if data.type === 'safe'}
 						<div>
 							<div class="text-center mb-3">Amount</div>
 							<Input
 								width="187"
 								preventEmpty
-								value={data.type === 'safe' ? data.amount : undefined}
+								value={data.amount}
 								onchange={(value) => {
-									data.type === 'safe' && (data.amount = parseInt(value));
+									data.amount = parseInt(value);
 								}}
 							/>
 						</div>
@@ -299,37 +322,127 @@
 							<div
 								class={cn(
 									'text-center mb-3',
-									data.type === 'safe' && !data.valCap && 'text-textLight'
+									!data.valCap && 'text-textLight'
 								)}
 							>
 								Valuation cap
 							</div>
 							<Input
 								width="187"
-								value={data.type === 'safe' ? data.valCap : undefined}
+								value={data.valCap}
 								onchange={(value) => {
-									data.type === 'safe' && (data.valCap = parseInt(value));
+									data.valCap = parseInt(value);
 								}}
-								faded={data.type === 'safe' && !data.valCap}
+								faded={!data.valCap}
 							/>
 						</div>
 						<div>
 							<div
 								class={cn(
 									'text-center mb-3',
-									data.type === 'safe' && !data.discount && 'text-textLight'
+									!data.discount && 'text-textLight'
 								)}
 							>
 								Discount
 							</div>
 							<Input
 								width="90"
-								value={data.type === 'safe' ? data.discount : undefined}
+								value={data.discount}
 								onchange={(value) => {
-									data.type === 'safe' && (data.discount = parseInt(value));
+									data.discount = parseInt(value);
 								}}
 								type="percent"
-								faded={data.type === 'safe' && !data.discount}
+								faded={!data.discount}
+							/>
+						</div>
+					{:else if data.type === 'convertible'}
+						<div>
+							<div class="text-center mb-3">Principal</div>
+							<Input
+								width="140"
+								preventEmpty
+								value={data.amount}
+								onchange={(value) => {
+									data.amount = parseInt(value);
+								}}
+							/>
+						</div>
+						<div>
+							<div
+								class={cn(
+									'text-center mb-3',
+									!data.valCap && 'text-textLight'
+								)}
+							>
+								Valuation cap
+							</div>
+							<Input
+								width="140"
+								value={data.valCap}
+								onchange={(value) => {
+									data.valCap = parseInt(value);
+								}}
+								faded={!data.valCap}
+							/>
+						</div>
+						<div>
+							<div
+								class={cn(
+									'text-center mb-3',
+									!data.discount && 'text-textLight'
+								)}
+							>
+								Discount
+							</div>
+							<Input
+								width="70"
+								value={data.discount}
+								onchange={(value) => {
+									data.discount = parseInt(value);
+								}}
+								type="percent"
+								faded={!data.discount}
+							/>
+						</div>
+						<div>
+							<div
+								class="text-center mb-3"
+								use:tippy={{
+									maxWidth: 220,
+									content: 'Annual interest rate that accrues on the principal until conversion.',
+									arrow: false
+								}}
+							>
+								Interest
+							</div>
+							<Input
+								width="70"
+								value={data.interestRate}
+								preventEmpty
+								onchange={(value) => {
+									data.interestRate = parseFloat(value);
+								}}
+								type="percent"
+							/>
+						</div>
+						<div>
+							<div
+								class="text-center mb-3"
+								use:tippy={{
+									maxWidth: 220,
+									content: 'Number of months until the note matures. Interest accrues over this period.',
+									arrow: false
+								}}
+							>
+								Term (mo)
+							</div>
+							<Input
+								width="70"
+								value={data.term}
+								preventEmpty
+								onchange={(value) => {
+									data.term = parseInt(value);
+								}}
 							/>
 						</div>
 					{/if}
@@ -347,16 +460,18 @@
 							<Select bind:checked={data.mfn} class="mt-5 " label="MFN provision" />
 						</div>
 					{/if}
-					<div
-						use:tippy={{
-							arrow: false,
-							maxWidth: 220,
-							content:
-								'This investor will have the right to invest in future rounds to keep their ownership % constant'
-						}}
-					>
-						<Select bind:checked={data.proRata} class="mt-5 max-sm:mt-2" label="Pro-rata rights" />
-					</div>
+					{#if data.type === 'safe' || data.type === 'priced' || data.type === 'convertible'}
+						<div
+							use:tippy={{
+								arrow: false,
+								maxWidth: 220,
+								content:
+									'This investor will have the right to invest in future rounds to keep their ownership % constant'
+							}}
+						>
+							<Select bind:checked={data.proRata} class="mt-5 max-sm:mt-2" label="Pro-rata rights" />
+						</div>
+					{/if}
 				</div>
 			</div>
 
@@ -490,10 +605,26 @@
 						</div>
 					</div>
 				{/if}
-			{:else}
+			{:else if data.type === 'safe'}
 				<div class="bg-bg flex align-center justify-center py-5 rounded-b-2xl">
 					<span class="mr-3 text-textLight">Safe type</span>
 					<span>{getSafeType(data)}</span>
+				</div>
+				<div
+					class="hidden py-10 rounded-xl bg-bg w-full max-sm:flex flex-col items-center justify-center"
+				>
+					<div class="text-center text-textLight text-xs mb-3">Resulting cap table</div>
+					<FloatingTable position={index} />
+				</div>
+			{:else if data.type === 'convertible'}
+				<div class="bg-bg flex flex-col align-center justify-center py-5 rounded-b-2xl text-center">
+					<div class="flex justify-center">
+						<span class="mr-3 text-textLight">Note type</span>
+						<span>{getConvertibleNoteType(data)}</span>
+					</div>
+					<div class="text-xs text-textLight mt-2">
+						Converts at: {formatAmount(getConvertibleNoteAccruedAmount(data))} (principal + interest)
+					</div>
 				</div>
 				<div
 					class="hidden py-10 rounded-xl bg-bg w-full max-sm:flex flex-col items-center justify-center"

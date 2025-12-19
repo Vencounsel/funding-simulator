@@ -30,13 +30,30 @@
 			}
 		];
 	};
+
+	const addConvertibleNote = () => {
+		$events = [
+			...$events,
+			{
+				type: 'convertible',
+				amount: 100_000,
+				interestRate: 5,
+				term: 18,
+				valCap: 1_000_000,
+				discount: 0,
+				proRata: true,
+				name: 'Note 1'
+			}
+		];
+	};
 </script>
 
 <div class="rounded-xl bg-white border-[3px] border-borderLight">
 	<div class="p-4 text-center border-b-2 border-borderLight text-primaryOrange">Add funding</div>
 
-	<div class="flex gap-6 p-10 pb-4 pt-8">
+	<div class="flex gap-6 p-10 pb-4 pt-8 flex-wrap justify-center">
 		<Button class="w-[130px] h-[80px]" onclick={addSafe}>SAFE</Button>
+		<Button class="w-[130px] h-[80px] text-center" onclick={addConvertibleNote}>Convertible<br />note</Button>
 		<Button class="w-[130px] h-[80px] text-center" onclick={addPriced}>Priced<br />round</Button>
 	</div>
 	<div class="h-[1px] bg-borderDark translate-y-[23px]" />

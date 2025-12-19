@@ -10,7 +10,7 @@ export type Exit = {
 	tax: number;
 };
 
-export type Event = Safe | PricedRound | Options;
+export type Event = Safe | PricedRound | Options | ConvertibleNote;
 
 export type Safe = {
 	type: 'safe';
@@ -19,6 +19,17 @@ export type Safe = {
 	proRata: boolean;
 	discount: number;
 	amount: number;
+	name: string;
+};
+
+export type ConvertibleNote = {
+	type: 'convertible';
+	amount: number;          // Principal amount
+	interestRate: number;    // Annual interest rate (e.g., 5 for 5%)
+	term: number;            // Term in months until maturity
+	valCap: number;          // Valuation cap
+	discount: number;        // Discount percentage
+	proRata: boolean;        // Pro-rata rights
 	name: string;
 };
 

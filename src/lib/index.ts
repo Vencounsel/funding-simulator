@@ -4,7 +4,7 @@ import type { ClassValue } from 'clsx';
 import { cubicOut } from 'svelte/easing';
 import type { TransitionConfig } from 'svelte/transition';
 import { twMerge } from 'tailwind-merge';
-import type { PricedRound, Safe } from './types';
+import type { ConvertibleNote, PricedRound, Safe } from './types';
 import { get } from 'svelte/store';
 import { events } from './store';
 import confetti from 'canvas-confetti';
@@ -138,10 +138,11 @@ const PRICED_ROUND_AMOUNTS: Record<string, [number, number]> = {
 	'Series G': [1200, 8000]
 };
 
-export const generateNameForEvent = (type: 'priced' | 'safe', position: number) => {
-	const allEvents = get(events).filter((e) => e.type === 'priced' || e.type === 'safe') as (
+export const generateNameForEvent = (type: 'priced' | 'safe' | 'convertible', position: number) => {
+	const allEvents = get(events).filter((e) => e.type === 'priced' || e.type === 'safe' || e.type === 'convertible') as (
 		| PricedRound
 		| Safe
+		| ConvertibleNote
 	)[];
 	const eventsBefore = allEvents.slice(0, position);
 	let name = '';
@@ -155,12 +156,20 @@ export const generateNameForEvent = (type: 'priced' | 'safe', position: number) 
 			name = PRICED_ROUND_NAMES[numberOfPricedBefore] + counter;
 			counter++;
 		}
-	} else {
+	} else if (type === 'safe') {
 		const numberOfSafesBefore = eventsBefore.filter((e) => e.type === 'safe').length;
 		let counter = 1;
 		name = 'Safe ' + (numberOfSafesBefore + 1);
 		while (allEvents.map((e) => e.name).includes(name)) {
 			name = 'Safe ' + (numberOfSafesBefore + 1) + ' - ' + counter;
+			counter++;
+		}
+	} else if (type === 'convertible') {
+		const numberOfNotesBefore = eventsBefore.filter((e) => e.type === 'convertible').length;
+		let counter = 1;
+		name = 'Note ' + (numberOfNotesBefore + 1);
+		while (allEvents.map((e) => e.name).includes(name)) {
+			name = 'Note ' + (numberOfNotesBefore + 1) + ' - ' + counter;
 			counter++;
 		}
 	}

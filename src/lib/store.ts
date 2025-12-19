@@ -1,6 +1,6 @@
 import { derived, get, writable } from 'svelte/store';
 import { browser } from '$app/environment';
-import type { CapTable, Event, Exit, Founder, Options, PricedRound, Safe } from './types';
+import type { CapTable, ConvertibleNote, Event, Exit, Founder, Options, PricedRound, Safe } from './types';
 import { getCapTables, getTableTotalShares } from './calculations';
 // import { goto } from '$app/navigation';
 
@@ -104,6 +104,19 @@ const getEventsFromString = (eventsString: string): Event[] => {
 			};
 			return event;
 		}
+		if (es[0] === 'c') {
+			const event: ConvertibleNote = {
+				type: 'convertible',
+				name: es.split(',')[1],
+				amount: parseInt(es.split(',')[2]),
+				valCap: parseInt(es.split(',')[3]),
+				discount: parseFloat(es.split(',')[4]),
+				interestRate: parseFloat(es.split(',')[5]),
+				term: parseInt(es.split(',')[6]),
+				proRata: es.split(',')[7] === '1'
+			};
+			return event;
+		}
 		const event: Options = {
 			amount: parseFloat(es.split(',')[1]),
 			type: 'options',
@@ -131,6 +144,9 @@ const getEventsString = (events: Event[]): string => {
 			}
 			if (e.type === 'priced') {
 				return `p,${e.name},${e.amount},${e.valuation},${e.options || 0},${e.proRata ? '1' : '0'},${e.participations.join('+')}`;
+			}
+			if (e.type === 'convertible') {
+				return `c,${e.name},${e.amount},${e.valCap},${e.discount},${e.interestRate},${e.term},${e.proRata ? '1' : '0'}`;
 			}
 			if (e.type === 'options') {
 				return `o,${e.amount},${e.reserved}`;
