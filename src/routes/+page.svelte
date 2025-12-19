@@ -55,7 +55,7 @@
 
 			<Dash position={0} noButton={$events.length === 0} />
 			{#each $events as event, eId}
-				{#if event.type === 'safe' || event.type === 'priced'}
+				{#if event.type === 'safe' || event.type === 'priced' || event.type === 'convertible'}
 					<FundingBox index={eId} bind:data={event} />
 				{/if}
 				{#if event.type === 'options'}

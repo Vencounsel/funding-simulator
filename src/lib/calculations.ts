@@ -1,7 +1,7 @@
 import { get } from 'svelte/store';
 import { events as _events, founders as _founders, exit as _exit } from './store';
 import { produce } from 'immer';
-import type { CapTable, Event, Options, PricedRound, Safe } from './types';
+import type { CapTable, ConvertibleNote, Event, Options, PricedRound, Safe } from './types';
 
 const INITIAL_SHARES = 10_000_000;
 export const AVAILABLE_OPTIONS_LABEL = 'Available';
@@ -91,6 +91,80 @@ export const getSafes = (firstPricedRound: PricedRound, totalShares: number) => 
 	return safesTables;
 };
 
+// Calculate accrued interest for a convertible note (simple interest)
+export const getConvertibleNoteAccruedAmount = (note: ConvertibleNote): number => {
+	const accruedInterest = note.amount * (note.interestRate / 100) * (note.term / 12);
+	return note.amount + accruedInterest;
+};
+
+// Get convertible notes with their valuations calculated
+export const getConvertibleNotesValuations = (firstPricedRound: PricedRound) =>
+	(get(_events).filter((e) => e.type === 'convertible') as ConvertibleNote[]).map((note) => {
+		let valuation = firstPricedRound.valuation;
+		const totalAmount = getConvertibleNoteAccruedAmount(note);
+
+		if (note.valCap && note.discount)
+			valuation = Math.min(note.valCap, firstPricedRound.valuation * (1 - note.discount / 100));
+		if (note.valCap && !note.discount) valuation = note.valCap;
+		if (!note.valCap && note.discount)
+			valuation = firstPricedRound.valuation * (1 - note.discount / 100);
+
+		return {
+			...note,
+			valuation,
+			totalAmount  // Principal + accrued interest
+		} as ConvertibleNote & { valuation: number; totalAmount: number };
+	});
+
+// Get convertible notes as shares at first priced round
+export const getConvertibleNotes = (firstPricedRound: PricedRound, totalShares: number) => {
+	const notesTables: CapTable = {};
+
+	const notesWithValuations = getConvertibleNotesValuations(firstPricedRound);
+
+	const totalNotesDilution = notesWithValuations.reduce((prev, curr) => {
+		return prev + curr.totalAmount / curr.valuation;
+	}, 0);
+
+	// Also account for SAFEs in the total dilution calculation
+	const safesWithMFN = getSafesWithMFN(getSafesValuations(firstPricedRound));
+	const totalSafesDilution = safesWithMFN.reduce((prev, curr) => {
+		return prev + curr.amount / curr.valuation;
+	}, 0);
+
+	const newTotal = totalShares / (1 - totalSafesDilution - totalNotesDilution);
+
+	notesWithValuations.forEach((note) => {
+		notesTables[note.name] = newTotal * (note.totalAmount / note.valuation);
+	});
+
+	return notesTables;
+};
+
+// Updated getSafes to account for convertible notes in dilution calculation
+export const getSafesWithNotes = (firstPricedRound: PricedRound, totalShares: number) => {
+	const safesTables: CapTable = {};
+
+	const safesWithMFN = getSafesWithMFN(getSafesValuations(firstPricedRound));
+	const notesWithValuations = getConvertibleNotesValuations(firstPricedRound);
+
+	const totalSafesDilution = safesWithMFN.reduce((prev, curr) => {
+		return prev + curr.amount / curr.valuation;
+	}, 0);
+
+	const totalNotesDilution = notesWithValuations.reduce((prev, curr) => {
+		return prev + curr.totalAmount / curr.valuation;
+	}, 0);
+
+	const newTotal = totalShares / (1 - totalSafesDilution - totalNotesDilution);
+
+	safesWithMFN.forEach((safe) => {
+		safesTables[safe.name] = newTotal * (safe.amount / safe.valuation!);
+	});
+
+	return safesTables;
+};
+
 export const getProRatas = ({
 	current,
 	event,
@@ -109,8 +183,8 @@ export const getProRatas = ({
 	let proRatas: CapTable = {};
 	allEvents.forEach((e) => {
 
-		if (e.type !== 'priced' && e.type !== 'safe') return;
-		if (e.type === 'safe' && !firstPricedRound) return;
+		if (e.type !== 'priced' && e.type !== 'safe' && e.type !== 'convertible') return;
+		if ((e.type === 'safe' || e.type === 'convertible') && !firstPricedRound) return;
 		if (!e.proRata || !current[e.name] || e.name === event.name) return;
 
 		const shares = newShares * (current[e.name] / total);
@@ -163,9 +237,13 @@ export const getNewTable = (event: Event, previousTable: CapTable, firstPricedRo
 
 	if (event.type === 'priced') {
 		let safes: CapTable = {};
+		let notes: CapTable = {};
 		if (firstPricedRound) {
-			safes = getSafes(event, oldTotal);
+			// Use the updated function that accounts for both SAFEs and convertible notes
+			safes = getSafesWithNotes(event, oldTotal);
+			notes = getConvertibleNotes(event, oldTotal);
 			newTable = addTables(newTable, safes);
+			newTable = addTables(newTable, notes);
 		}
 		let futureTotal = 0;
 		let newOptions = 0;
