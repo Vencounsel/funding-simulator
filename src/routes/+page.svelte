@@ -54,18 +54,21 @@
 </script>
 
 {#if $loadedData}
-	<div transition:fade class="__invertable max-sm:hidden fixed top-[30px] left-[30px] z-[3] flex flex-col items-center gap-3">
+	<!-- Back button - visible on all screens -->
+	<div transition:fade class="__invertable fixed top-[20px] left-[20px] max-sm:top-[15px] max-sm:left-[15px] z-[3]">
 		<button
 			on:click={() => {
 				goto('/', { replaceState: true });
 				$loadedData = false;
 			}}
-			class="text-textLight w-10 h-10 rounded-xl hover:bg-borderLight active:bg-borderDark flex items-center justify-center hover:scale-110 transition-transform"
+			class="text-textLight w-10 h-10 rounded-xl hover:bg-borderLight active:bg-borderDark flex items-center justify-center hover:scale-110 transition-transform glass"
 		>
 			<ArrowLeftIcon />
 		</button>
+	</div>
 
-		<!-- Progress Ring -->
+	<!-- Progress Ring - desktop only -->
+	<div transition:fade class="__invertable max-sm:hidden fixed top-[80px] left-[30px] z-[3]">
 		{#if true}
 			{@const currentStep = $exit ? 3 : $events.length > 0 ? 2 : 1}
 			{@const progress = (currentStep / 3) * 100}
