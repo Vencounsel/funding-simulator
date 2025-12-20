@@ -50,19 +50,15 @@
 		</div>
 	{/if}
 	{#if show}
-		<!-- Overlay for centering -->
-		<div class="fixed inset-0 z-[21] flex items-center justify-center pointer-events-none">
-			<div
-				id="options-box"
-				out:box
-				in:box={{ delay: 50 }}
-				class="relative pointer-events-auto w-[500px] max-sm:w-[350px] bg-bg transition-none duration-0 origin-center flex flex-col items-center h-fit funding-box border border-white rounded-2xl"
-			>
-			<div
-				class="max-sm:hidden absolute right-0 top-1/2 -translate-y-1/2 translate-x-[calc(100%+20px)]"
-			>
-				<FloatingTable position={index} />
-			</div>
+		<div
+			id="options-box"
+			class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] max-sm:w-[350px] bg-bg flex flex-col items-center h-fit border border-white rounded-2xl shadow-lg z-[21] max-sm:fixed max-sm:inset-0 max-sm:m-auto max-sm:translate-x-0 max-sm:translate-y-0"
+		>
+		<div
+			class="max-sm:hidden absolute right-0 top-1/2 -translate-y-1/2 translate-x-[calc(100%+20px)]"
+		>
+			<FloatingTable position={index} />
+		</div>
 			<div class="text-sm h-12 text-textLight flex items-center justify-center gap-1.5">
 				Previous available Option Pool is
 				<span class="text-primary">{parseFloat(Math.abs(available).toFixed(1))}% </span>
@@ -123,7 +119,6 @@
 			<div class="text-sm h-12 text-textLight flex items-center justify-center gap-1.5">
 				Option Pool that will remain is
 				<span class="text-primary">{parseFloat(Math.abs(remaining).toFixed(1))}%</span>
-			</div>
 			</div>
 		</div>
 	{:else}

@@ -217,19 +217,15 @@
 		</div>
 	{/if}
 	{#if show}
-		<!-- Overlay for centering -->
-		<div class="fixed inset-0 z-[21] flex items-center justify-center pointer-events-none">
-			<div
-				id="funding-box"
-				out:box
-				in:box={{ delay: 50 }}
-				class="relative pointer-events-auto transition-none duration-0 origin-center w-fit h-fit border border-white rounded-2xl funding-box max-sm:w-[350px] max-sm:max-h-[85vh] max-sm:overflow-y-auto"
-			>
-			<div
-				class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-[calc(100%+20px)] max-sm:hidden"
-			>
-				<FloatingTable position={index} valuation={data.type === 'priced' ? data.valuation : undefined} />
-			</div>
+		<div
+			id="funding-box"
+			class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-fit h-fit border border-white rounded-2xl bg-white shadow-lg z-[21] max-sm:fixed max-sm:inset-0 max-sm:m-auto max-sm:translate-x-0 max-sm:translate-y-0 max-sm:w-[350px] max-sm:max-h-[85vh] max-sm:overflow-y-auto"
+		>
+		<div
+			class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-[calc(100%+20px)] max-sm:hidden"
+		>
+			<FloatingTable position={index} valuation={data.type === 'priced' ? data.valuation : undefined} />
+		</div>
 			<div class="bg-bg flex justify-between items-center h-[54px] px-8 gap-4 rounded-t-2xl">
 				<input
 					value={data.name}
@@ -513,7 +509,7 @@
 			{#if data.type === 'priced'}
 				{#if !showProRata}
 					<div
-						class="bg-bg flex items-center justify-center gap-4 py-5 h-[180px] rounded-b-2xl max-sm:flex-col max-sm:items-center max-sm:h-fit"
+						class="bg-bg flex items-center justify-center gap-4 py-5 min-h-[180px] rounded-b-2xl max-sm:flex-col max-sm:items-center max-sm:h-fit"
 					>
 						<div>
 							Total equity sold: <span class="text-primary mr-2"
@@ -525,35 +521,35 @@
 						>
 							<!-- Column Headers -->
 							<div
-								class="px-3 py-1.5 flex items-center justify-between gap-4 border-b-2 border-borderDark text-[10px] text-textLight uppercase tracking-wide"
+								class="px-4 py-2 flex items-center justify-between gap-6 border-b-2 border-borderDark text-[10px] text-textLight uppercase tracking-wide"
 							>
 								<div class="">Source</div>
 								<div class="flex">
-									<div class="w-[55px] text-right">Amt</div>
-									<div class="w-[55px] text-right">Dilution</div>
+									<div class="w-[60px] text-right">Amt</div>
+									<div class="w-[60px] text-right">Dilution</div>
 								</div>
 							</div>
 							<div
-								class="px-3 py-2 flex items-center justify-between gap-4 border-b-2 border-borderDark last:border-none"
+								class="px-4 py-2.5 flex items-center justify-between gap-6 border-b-2 border-borderDark last:border-none"
 							>
 								<div class="">{data.name} investors</div>
 								<div class="flex">
-									<div class="w-[55px] text-right text-green-600">
+									<div class="w-[60px] text-right text-green-600">
 										+{formatAmount(Math.ceil(dilutions?.investors || 0))}
 									</div>
 
-									<div class="w-[55px] text-right text-primary">
+									<div class="w-[60px] text-right text-primary">
 										-{dilutions?.investorsPercent.toFixed(1)}%
 									</div>
 								</div>
 							</div>
 							{#if showSafesLine}
 								<div
-									class="px-3 py-2 flex items-center justify-between gap-4 border-b-2 border-borderDark last:border-none text-textDark"
+									class="px-4 py-2.5 flex items-center justify-between gap-6 border-b-2 border-borderDark last:border-none text-textDark"
 								>
 									<div class="">SAFEs conversion</div>
 									<div class="flex">
-										<div class="w-[55px] text-right text-primary">
+										<div class="w-[60px] text-right text-primary">
 											-{dilutions?.safes.toFixed(1)}%
 										</div>
 									</div>
@@ -561,11 +557,11 @@
 							{/if}
 							{#if showNotesLine}
 								<div
-									class="px-3 py-2 flex items-center justify-between gap-4 border-b-2 border-borderDark last:border-none text-textDark"
+									class="px-4 py-2.5 flex items-center justify-between gap-6 border-b-2 border-borderDark last:border-none text-textDark"
 								>
 									<div class="">Notes conversion</div>
 									<div class="flex">
-										<div class="w-[55px] text-right text-primary">
+										<div class="w-[60px] text-right text-primary">
 											-{dilutions?.notes.toFixed(1)}%
 										</div>
 									</div>
@@ -574,11 +570,11 @@
 
 							{#if showOptionsLine}
 								<div
-									class="px-3 py-2 flex items-center justify-between gap-4 border-b-2 border-borderDark last:border-none text-textDark"
+									class="px-4 py-2.5 flex items-center justify-between gap-6 border-b-2 border-borderDark last:border-none text-textDark"
 								>
 									<div class="">Options Pool Increase</div>
 									<div class="flex">
-										<div class="w-[55px] text-right text-primary">
+										<div class="w-[60px] text-right text-primary">
 											-{dilutions?.options.toFixed(1)}%
 										</div>
 									</div>
@@ -588,7 +584,7 @@
 								<div
 									on:click={() => (showProRata = true)}
 									class={cn(
-										'relative  hover:bg-borderLight cursor-pointer px-3 py-2 flex items-center justify-between gap-4 border-b-2 border-borderDark last:border-none rounded-[10px] rounded-t-none active:bg-borderDark pr-4'
+										'relative hover:bg-borderLight cursor-pointer px-4 py-2.5 flex items-center justify-between gap-6 border-b-2 border-borderDark last:border-none rounded-[10px] rounded-t-none active:bg-borderDark pr-5'
 									)}
 								>
 									{#if participatingProRatas.length === 0}
@@ -600,11 +596,11 @@
 												: `${participatingProRatas.length} others (Pro-Rata)`}
 										</div>
 										<div class="flex">
-											<div class="w-[55px] text-right text-green-600">
+											<div class="w-[60px] text-right text-green-600">
 												+{formatAmount(Math.ceil(dilutions?.proratas || 0))}
 											</div>
 
-											<div class="w-[55px] text-right text-primary">
+											<div class="w-[60px] text-right text-primary">
 												-{dilutions?.proratasPercent.toFixed(1)}%
 											</div>
 										</div>
@@ -690,7 +686,6 @@
 					<FloatingTable position={index} />
 				</div>
 			{/if}
-			</div>
 		</div>
 	{:else}
 		<CollapsedFunding
