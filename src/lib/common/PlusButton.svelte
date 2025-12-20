@@ -5,9 +5,21 @@
 	import ExitIcon from '$lib/icons/ExitIcon.svelte';
 	import SafeIcon from '$lib/icons/SafeIcon.svelte';
 	import NoteIcon from '$lib/icons/NoteIcon.svelte';
+	import AcceleratorIcon from '$lib/icons/AcceleratorIcon.svelte';
 	import { events, exit } from '$lib/store';
 	import { onMount } from 'svelte';
-	import type { ConvertibleNote, PricedRound, Safe } from '$lib/types';
+	import type { Accelerator, ConvertibleNote, PricedRound, Safe } from '$lib/types';
+
+	// Accelerator presets with verified 2024-2025 deal terms
+	const ACCELERATOR_PRESETS = [
+		{ name: 'Y Combinator', investment: 500_000, equity: 7, equityFree: false },
+		{ name: 'Techstars', investment: 220_000, equity: 5, equityFree: false },
+		{ name: 'a16z Speedrun', investment: 500_000, equity: 10, equityFree: false },
+		{ name: '500 Global', investment: 150_000, equity: 6, equityFree: false },
+		{ name: 'Antler', investment: 125_000, equity: 10, equityFree: false },
+		{ name: 'SOSV/HAX', investment: 250_000, equity: 10, equityFree: false },
+		{ name: 'MassChallenge', investment: 100_000, equity: 0, equityFree: true }
+	];
 
 	let ref: HTMLDivElement;
 
@@ -111,6 +123,106 @@
 	};
 
 	let showMenu = false;
+	let showAcceleratorSubmenu = false;
+
+	const addAccelerator = (preset: typeof ACCELERATOR_PRESETS[0]) => {
+		showMenu = false;
+		showAcceleratorSubmenu = false;
+
+		if (preset.equityFree) {
+			// Create equity-free accelerator event
+			const acceleratorEvent: Accelerator = {
+				type: 'accelerator',
+				name: preset.name,
+				programName: preset.name,
+				amount: preset.investment
+			};
+			$events = [
+				...$events.slice(0, position),
+				acceleratorEvent,
+				...$events.slice(position)
+			];
+		} else if (preset.name === 'Y Combinator') {
+			// Y Combinator has a special two-SAFE structure
+			// 1. $125K post-money SAFE for 7% equity
+			const ycSafe125k: Safe = {
+				type: 'safe',
+				amount: 125_000,
+				discount: 0,
+				mfn: false,
+				name: 'YC $125K',
+				proRata: true,
+				valCap: Math.round(125_000 / 0.07), // ~$1.78M cap for 7%
+				accelerator: 'Y Combinator'
+			};
+			// 2. $375K uncapped MFN SAFE
+			const ycSafeMFN: Safe = {
+				type: 'safe',
+				amount: 375_000,
+				discount: 0,
+				mfn: true,
+				name: 'YC MFN',
+				proRata: true,
+				valCap: 0, // Uncapped - will convert at lowest cap of other SAFEs
+				accelerator: 'Y Combinator'
+			};
+			$events = [
+				...$events.slice(0, position),
+				ycSafe125k,
+				ycSafeMFN,
+				...$events.slice(position)
+			];
+		} else if (preset.name === 'Techstars') {
+			// Techstars has a two-part structure (2025 terms)
+			// 1. $20K CEA (Convertible Equity Agreement) for 5% common stock
+			const tsCEA: Safe = {
+				type: 'safe',
+				amount: 20_000,
+				discount: 0,
+				mfn: false,
+				name: 'Techstars CEA',
+				proRata: true,
+				valCap: Math.round(20_000 / 0.05), // $400K cap for 5%
+				accelerator: 'Techstars'
+			};
+			// 2. $200K uncapped MFN SAFE
+			const tsMFN: Safe = {
+				type: 'safe',
+				amount: 200_000,
+				discount: 0,
+				mfn: true,
+				name: 'Techstars MFN',
+				proRata: true,
+				valCap: 0, // Uncapped - will convert at lowest cap of other SAFEs
+				accelerator: 'Techstars'
+			};
+			$events = [
+				...$events.slice(0, position),
+				tsCEA,
+				tsMFN,
+				...$events.slice(position)
+			];
+		} else {
+			// Create SAFE with calculated valuation cap based on equity %
+			// Post-money valuation = investment / equity percentage
+			const valCap = Math.round(preset.investment / (preset.equity / 100));
+			const safeEvent: Safe = {
+				type: 'safe',
+				amount: preset.investment,
+				discount: 0,
+				mfn: false,
+				name: preset.name,
+				proRata: true, // Most accelerators have pro-rata rights
+				valCap: valCap,
+				accelerator: preset.name
+			};
+			$events = [
+				...$events.slice(0, position),
+				safeEvent,
+				...$events.slice(position)
+			];
+		}
+	};
 
 	export let position: number;
 
@@ -155,16 +267,13 @@
 			transition:menu
 			class="absolute -left-8 top-[50%] -translate-y-[50%] p-12 pl-24 max-sm:p-0 max-sm:top-[50%] max-sm:-translate-x-[50%] max-sm:left-[50%]"
 		>
-			<!-- <div
-				class="w-3 h-3 bg-white absolute top-[50%] -translate-y-[50%] -translate-x-[50%] rotate-45 z-20 rounded-bl-[3px]"
-			/> -->
 			<div
-				class="bg-white text-textDark rounded-xl text-[13px] overflow-hidden z-[21] relative border border-white menu-box"
+				class="bg-white text-textDark rounded-xl text-[13px] z-[21] relative border border-white menu-box"
 			>
 				<div
 					on:click={addSafe}
 					class={cn(
-						'border-b border-borderLight last:border-none flex items-center h-[44px] px-4 cursor-pointer min-w-[150px] hover:bg-bg active:bg-borderLight whitespace-nowrap',
+						'border-b border-borderLight last:border-none flex items-center h-[44px] px-4 cursor-pointer min-w-[150px] hover:bg-bg active:bg-borderLight whitespace-nowrap rounded-t-xl',
 						!showSafe && 'pointer-events-none'
 					)}
 				>
@@ -215,6 +324,54 @@
 					<span>Employee Options</span>
 				</div>
 
+				<!-- Accelerator with submenu -->
+				<div
+					class="relative"
+					on:mouseenter={() => (showAcceleratorSubmenu = true)}
+					on:mouseleave={() => (showAcceleratorSubmenu = false)}
+				>
+					<div
+						on:click={() => (showAcceleratorSubmenu = !showAcceleratorSubmenu)}
+						class={cn(
+							'border-b border-borderLight last:border-none flex items-center h-[44px] px-4 cursor-pointer min-w-[150px] hover:bg-bg active:bg-borderLight whitespace-nowrap',
+							!showSafe && 'pointer-events-none'
+						)}
+					>
+						<div class={cn('w-3 mr-3 text-primary', !showSafe && 'opacity-30')}>
+							<AcceleratorIcon />
+						</div>
+						<span class={cn(!showSafe && 'opacity-30')}>Accelerator</span>
+						<svg
+							class={cn('w-3 h-3 ml-auto', !showSafe && 'opacity-30')}
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+						</svg>
+					</div>
+
+					{#if showAcceleratorSubmenu && showSafe}
+						<div
+							class="absolute left-full top-0 ml-1 bg-white rounded-xl border border-white overflow-hidden z-[22] menu-box max-sm:left-0 max-sm:top-full max-sm:ml-0 max-sm:mt-1"
+						>
+							{#each ACCELERATOR_PRESETS as preset}
+								<div
+									on:click={() => addAccelerator(preset)}
+									class="flex items-center justify-between h-[44px] px-4 cursor-pointer min-w-[180px] hover:bg-bg active:bg-borderLight whitespace-nowrap border-b border-borderLight last:border-none"
+								>
+									<span>{preset.name}</span>
+									{#if preset.equityFree}
+										<span class="text-textLight text-xs ml-2">0%</span>
+									{:else}
+										<span class="text-textLight text-xs ml-2">{preset.equity}%</span>
+									{/if}
+								</div>
+							{/each}
+						</div>
+					{/if}
+				</div>
+
 				<div
 					on:click={() => {
 						showMenu = false;
@@ -224,7 +381,7 @@
 						};
 					}}
 					class={cn(
-						'border-b border-borderLight last:border-none flex items-center h-[44px] px-4 cursor-pointer min-w-[150px] hover:bg-bg active:bg-borderLight whitespace-nowrap',
+						'border-b border-borderLight last:border-none flex items-center h-[44px] px-4 cursor-pointer min-w-[150px] hover:bg-bg active:bg-borderLight whitespace-nowrap rounded-b-xl',
 						!showExit && 'pointer-events-none'
 					)}
 				>

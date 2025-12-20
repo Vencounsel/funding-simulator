@@ -5,8 +5,10 @@
 		EMPLOYEE_OPTIONS_LABEL,
 		getTableTotalShares
 	} from '$lib/calculations';
-	import { founders, tables } from '$lib/store';
+	import { events, founders, tables } from '$lib/store';
 	import { get } from 'svelte/store';
+	import type { Safe, Accelerator } from '$lib/types';
+	import AcceleratorIcon from '$lib/icons/AcceleratorIcon.svelte';
 
 	export let position: number;
 	export let valuation: number | undefined = undefined;
@@ -31,10 +33,28 @@
 		return (equityPercent / 100) * valuation;
 	};
 
+	// Get accelerator mappings from events up to current position
+	$: acceleratorMap = (() => {
+		const map: { [safeName: string]: string } = {};
+		$events.slice(0, position + 1).forEach((e) => {
+			if (e.type === 'safe' && e.accelerator) {
+				map[e.name] = e.accelerator;
+			}
+		});
+		return map;
+	})();
+
+	// Get equity-free accelerators (Accelerator type events) up to current position
+	$: equityFreeAccelerators = $events
+		.slice(0, position + 1)
+		.filter((e): e is Accelerator => e.type === 'accelerator')
+		.map((e) => e.programName);
+
 	$: lines = Object.keys(table).map((k) => ({
 		label: k,
 		equity: getEquity(table[k]),
 		diff: getDiff(table[k], lastTable?.[k] || 0),
+		accelerator: acceleratorMap[k] || null,
 		type: get(founders)
 			.map((f) => f.name)
 			.includes(k)
@@ -45,7 +65,52 @@
 	}));
 
 	$: foundersLines = lines.filter((l) => l.type === 'founder');
-	$: investorsLines = lines.filter((l) => l.type === 'other');
+
+	// Group investors by accelerator
+	$: investorsLines = (() => {
+		const otherLines = lines.filter((l) => l.type === 'other');
+		const acceleratorGroups: { [accelerator: string]: { equity: number; diff: number; labels: string[] } } = {};
+		const nonAcceleratorLines: typeof otherLines = [];
+
+		otherLines.forEach((line) => {
+			if (line.accelerator) {
+				if (!acceleratorGroups[line.accelerator]) {
+					acceleratorGroups[line.accelerator] = { equity: 0, diff: 0, labels: [] };
+				}
+				acceleratorGroups[line.accelerator].equity += line.equity;
+				acceleratorGroups[line.accelerator].diff += line.diff;
+				acceleratorGroups[line.accelerator].labels.push(line.label);
+			} else {
+				nonAcceleratorLines.push(line);
+			}
+		});
+
+		// Convert accelerator groups to lines
+		const acceleratorLines = Object.entries(acceleratorGroups).map(([accelerator, data]) => ({
+			label: accelerator,
+			equity: data.equity,
+			diff: data.diff,
+			accelerator: accelerator,
+			type: 'other' as const,
+			isAcceleratorGroup: true
+		}));
+
+		// Add equity-free accelerators that aren't already in the table
+		const existingAccelerators = new Set(Object.keys(acceleratorGroups));
+		const equityFreeLines = equityFreeAccelerators
+			.filter((name) => !existingAccelerators.has(name))
+			.map((name) => ({
+				label: name,
+				equity: 0,
+				diff: 0,
+				accelerator: name,
+				type: 'other' as const,
+				isAcceleratorGroup: true
+			}));
+
+		return [...acceleratorLines, ...equityFreeLines, ...nonAcceleratorLines];
+	})();
+
 	$: optionsLines = lines.filter((l) => l.type === 'options');
 </script>
 
@@ -109,8 +174,11 @@
 			<div
 				class="group/line hover:bg-borderLight p-0.5 px-2 -mx-2 flex text-xs gap-6 justify-between border-borderLight last:border-none"
 			>
-				<div class="shrink-0 min-w-[70px] text-textDark">
+				<div class="shrink-0 min-w-[70px] text-textDark flex items-center gap-1">
 					{line.label}
+					{#if line.isAcceleratorGroup}
+						<span class="w-3 h-3 text-primary"><AcceleratorIcon /></span>
+					{/if}
 				</div>
 				<div class="text-textDark">
 					{line.equity.toFixed(1)}%

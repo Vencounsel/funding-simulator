@@ -1,6 +1,6 @@
 import { derived, get, writable } from 'svelte/store';
 import { browser } from '$app/environment';
-import type { CapTable, ConvertibleNote, Event, Exit, Founder, Options, PricedRound, Safe } from './types';
+import type { Accelerator, CapTable, ConvertibleNote, Event, Exit, Founder, Options, PricedRound, Safe } from './types';
 import { getCapTables, getTableTotalShares } from './calculations';
 // import { goto } from '$app/navigation';
 
@@ -88,7 +88,8 @@ const getEventsFromString = (eventsString: string): Event[] => {
 				valCap: parseInt(es.split(',')[3]),
 				discount: parseFloat(es.split(',')[4]),
 				proRata: es.split(',')[5].split('')[0] === '1',
-				mfn: es.split(',')[5].split('')[1] === '1'
+				mfn: es.split(',')[5].split('')[1] === '1',
+				accelerator: es.split(',')[6] ? decodeURIComponent(es.split(',')[6]) : undefined
 			};
 			return event;
 		}
@@ -119,6 +120,15 @@ const getEventsFromString = (eventsString: string): Event[] => {
 			};
 			return event;
 		}
+		if (es[0] === 'a') {
+			const event: Accelerator = {
+				type: 'accelerator',
+				name: es.split(',')[1],
+				programName: decodeURIComponent(es.split(',')[2] || ''),
+				amount: parseInt(es.split(',')[3]) || 0
+			};
+			return event;
+		}
 		const event: Options = {
 			amount: parseFloat(es.split(',')[1]),
 			type: 'options',
@@ -143,7 +153,7 @@ const getEventsString = (events: Event[]): string => {
 			if (e.type === 'safe') {
 				return `s,${e.name},${e.amount},${e.valCap},${e.discount},${e.proRata ? '1' : '0'}${
 					e.mfn ? '1' : '0'
-				}`;
+				},${e.accelerator ? encodeURIComponent(e.accelerator) : ''}`;
 			}
 			if (e.type === 'priced') {
 				return `p,${e.name},${e.amount},${e.valuation},${e.options || 0},${e.proRata ? '1' : '0'},${e.participations.join('+')},${e.monthsToRound || 12}`;
@@ -153,6 +163,9 @@ const getEventsString = (events: Event[]): string => {
 			}
 			if (e.type === 'options') {
 				return `o,${e.amount},${e.reserved},${e.grantName || ''}`;
+			}
+			if (e.type === 'accelerator') {
+				return `a,${e.name},${encodeURIComponent(e.programName)},${e.amount}`;
 			}
 		})
 		.join('_');

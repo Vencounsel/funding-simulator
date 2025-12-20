@@ -5,7 +5,7 @@
 	import type { ConvertibleNote, PricedRound, Safe } from '$lib/types';
 
 	import DeleteIcon from '$lib/icons/DeleteIcon.svelte';
-	import { getSafesValuations, getSafesWithMFN, getConvertibleNotesValuations, getConvertibleNoteAccruedAmount, getTableTotalShares } from '$lib/calculations';
+	import { getSafesValuations, getSafesWithMFN, getConvertibleNotesValuations, getConvertibleNotesWithMFN, getConvertibleNoteAccruedAmount, getTableTotalShares } from '$lib/calculations';
 
 	$: pricedRounds = $events.filter((e) => e.type === 'priced') as PricedRound[];
 	$: firstPricedRound = pricedRounds[0] || null;
@@ -133,13 +133,17 @@
 		return res;
 	};
 
+	// Get base valuations for MFN calculation
+	$: safesBase = firstPricedRound ? getSafesValuations(firstPricedRound) : [];
+	$: notesBase = firstPricedRound ? getConvertibleNotesValuations(firstPricedRound) : [];
+
 	$: effectiveValuation = firstPricedRound
-		? getSafesWithMFN(getSafesValuations(firstPricedRound)).find((el) => el.name === data.name)
+		? getSafesWithMFN(safesBase, notesBase).find((el) => el.name === data.name)
 				?.valuation || null
 		: null;
 
 	$: effectiveNoteValuation = firstPricedRound
-		? getConvertibleNotesValuations(firstPricedRound).find((el) => el.name === data.name)
+		? getConvertibleNotesWithMFN(notesBase, safesBase).find((el) => el.name === data.name)
 				?.valuation || null
 		: null;
 </script>
@@ -152,20 +156,28 @@
 		<div class="pl-2 max-sm:block hidden">
 			{data.name}
 		</div>
-		<div
-			class={cn(
-				'max-sm:pr-2 text-center text-xs my-2',
-				data.type === 'priced' ? 'text-blue font-medium' : 'text-textLight',
-				sameNameError && 'text-red-500'
-			)}
-		>
-			{sameNameError
-				? 'Error: Duplicate name'
-				: data.type === 'priced'
-					? 'Priced Round'
-					: data.type === 'convertible'
-						? 'Note - ' + getConvertibleNoteLabel()
-						: 'SAFE - ' + getSafeLabel()}
+		<div class="flex flex-col items-center max-sm:items-end">
+			{#if data.type === 'safe' && data.accelerator}
+				<div class="text-[10px] text-primary font-medium tracking-wide max-sm:pr-2">
+					{data.accelerator}
+				</div>
+			{/if}
+			<div
+				class={cn(
+					'max-sm:pr-2 text-center text-xs',
+					data.type === 'safe' && data.accelerator ? 'my-0.5' : 'my-2',
+					data.type === 'priced' ? 'text-blue font-medium' : 'text-textLight',
+					sameNameError && 'text-red-500'
+				)}
+			>
+				{sameNameError
+					? 'Error: Duplicate name'
+					: data.type === 'priced'
+						? 'Priced Round'
+						: data.type === 'convertible'
+							? 'Note - ' + getConvertibleNoteLabel()
+							: 'SAFE - ' + getSafeLabel()}
+			</div>
 		</div>
 	</div>
 	<div

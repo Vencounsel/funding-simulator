@@ -50,6 +50,8 @@
 		</div>
 	{/if}
 	{#if show}
+		<!-- Backdrop overlay -->
+		<div class="fixed inset-0 bg-black/20 z-20" />
 		<div
 			id="options-box"
 			class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] max-sm:w-[350px] bg-bg flex flex-col items-center h-fit border border-white rounded-2xl shadow-lg z-[21] max-sm:fixed max-sm:inset-0 max-sm:m-auto max-sm:translate-x-0 max-sm:translate-y-0"

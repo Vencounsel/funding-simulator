@@ -29,7 +29,8 @@
 
 	$: previousInvestorsWithProRata = (
 		$events.slice(0, index).filter((e) => {
-			if (e.type === 'options' || !e.proRata) return false;
+			if (e.type === 'options' || e.type === 'accelerator') return false;
+			if (!e.proRata) return false;
 			if ((e.type === 'safe' || e.type === 'convertible') && !isFirstPriced) return false;
 			return true;
 		}) as (PricedRound | Safe | ConvertibleNote)[]
@@ -37,7 +38,7 @@
 
 	$: sameNameError =
 		$events.filter((e) => {
-			if (e.type === 'options') return false;
+			if (e.type === 'options' || e.type === 'accelerator') return false;
 			return e.name === data.name;
 		}).length > 1;
 
@@ -217,6 +218,10 @@
 		</div>
 	{/if}
 	{#if show}
+		<!-- Backdrop overlay -->
+		<div class="fixed inset-0 bg-black/20 z-20" />
+	{/if}
+	{#if show}
 		<div
 			id="funding-box"
 			class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-fit h-fit border border-white rounded-2xl bg-white shadow-lg z-[21] max-sm:fixed max-sm:inset-0 max-sm:m-auto max-sm:translate-x-0 max-sm:translate-y-0 max-sm:w-[350px] max-sm:max-h-[85vh] max-sm:overflow-y-auto"
@@ -242,8 +247,15 @@
 						sameNameError && 'border border-red-500'
 					)}
 				/>
-				<div class="text-textLight text-sm">
-					{data.type === 'priced' ? 'Priced Round / Equity' : data.type === 'convertible' ? 'Convertible Note' : 'Post-Money SAFE'}
+				<div class="flex flex-col items-end shrink-0">
+					{#if data.type === 'safe' && data.accelerator}
+						<div class="text-[10px] text-primary font-medium tracking-wide">
+							{data.accelerator}
+						</div>
+					{/if}
+					<div class="text-textLight text-sm">
+						{data.type === 'priced' ? 'Priced Round / Equity' : data.type === 'convertible' ? 'Convertible Note' : 'Post-Money SAFE'}
+					</div>
 				</div>
 			</div>
 

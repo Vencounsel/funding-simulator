@@ -10,7 +10,7 @@ export type Exit = {
 	tax: number;
 };
 
-export type Event = Safe | PricedRound | Options | ConvertibleNote;
+export type Event = Safe | PricedRound | Options | ConvertibleNote | Accelerator;
 
 export type Safe = {
 	type: 'safe';
@@ -20,6 +20,7 @@ export type Safe = {
 	discount: number;
 	amount: number;
 	name: string;
+	accelerator?: string;  // Optional: name of accelerator program if this SAFE came from an accelerator preset
 };
 
 export type ConvertibleNote = {
@@ -50,6 +51,13 @@ export type Options = {
 	amount: number;
 	reserved: number;
 	grantName: string;  // Name of recipient (e.g., "CTO", "Advisor 1") - empty string means generic "Employees"
+};
+
+export type Accelerator = {
+	type: 'accelerator';
+	name: string;           // Accelerator name (e.g., "MassChallenge")
+	programName: string;    // Display name for the program
+	amount: number;         // Funding amount (prize money, grants, etc.)
 };
 
 // types

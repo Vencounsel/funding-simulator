@@ -8,6 +8,7 @@
 	import FundingBox from '$lib/sections/FundingBox.svelte';
 	import Homepage from '$lib/sections/Homepage.svelte';
 	import Options from '$lib/sections/Options.svelte';
+	import AcceleratorBox from '$lib/sections/AcceleratorBox.svelte';
 	import Results from '$lib/sections/Results.svelte';
 	import { events, exit, loadedData } from '$lib/store';
 	import MoonIcon from '$lib/icons/MoonIcon.svelte';
@@ -118,6 +119,9 @@
 				{/if}
 				{#if event.type === 'options'}
 					<Options index={eId} bind:data={event} />
+				{/if}
+				{#if event.type === 'accelerator'}
+					<AcceleratorBox index={eId} bind:data={event} />
 				{/if}
 				<Dash position={eId + 1} noButton={!$exit && eId === $events.length - 1} height={getDashHeight(eId + 1)} />
 			{/each}
