@@ -218,12 +218,14 @@
 		<FloatingTable position={index} valuation={data.type === 'priced' ? data.valuation : undefined} />
 	</div>
 	{#if show}
-		<div
-			id="funding-box"
-			out:box
-			in:box={{ delay: 50 }}
-			class="transition-none duration-0 origin-center fixed top-[50%] left-[50%] -translate-x-[50%] -translate-y-[50%] w-fit h-fit z-[21] border border-white rounded-2xl funding-box max-sm:w-[350px] max-sm:max-h-[85vh] max-sm:overflow-y-auto"
-		>
+		<!-- Overlay for centering -->
+		<div class="fixed inset-0 z-[21] flex items-center justify-center pointer-events-none">
+			<div
+				id="funding-box"
+				out:box
+				in:box={{ delay: 50 }}
+				class="pointer-events-auto transition-none duration-0 origin-center w-fit h-fit border border-white rounded-2xl funding-box max-sm:w-[350px] max-sm:max-h-[85vh] max-sm:overflow-y-auto"
+			>
 			<div
 				class="absolute right-[0] top-[calc(50%_+_11px)] -translate-y-[50%] translate-x-[calc(100%_+_20px)] max-sm:hidden"
 			>
@@ -689,6 +691,7 @@
 					<FloatingTable position={index} />
 				</div>
 			{/if}
+			</div>
 		</div>
 	{:else}
 		<CollapsedFunding
