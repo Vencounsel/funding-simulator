@@ -209,14 +209,13 @@
 </script>
 
 <div class="group relative flex flex-col items-center h-[105px] __event max-sm:h-[140px]">
-	<div
-		class={cn(
-			'absolute -right-[10px] top-[calc(50%_+_1.5px)] -translate-y-[50%] translate-x-[100%] group-hover:block hidden max-sm:group-hover:hidden ',
-			show && 'hidden'
-		)}
-	>
-		<FloatingTable position={index} valuation={data.type === 'priced' ? data.valuation : undefined} />
-	</div>
+	{#if !show}
+		<div
+			class="absolute -right-[10px] top-[calc(50%_+_1.5px)] -translate-y-[50%] translate-x-[100%] group-hover:block hidden max-sm:group-hover:hidden"
+		>
+			<FloatingTable position={index} valuation={data.type === 'priced' ? data.valuation : undefined} />
+		</div>
+	{/if}
 	{#if show}
 		<!-- Overlay for centering -->
 		<div class="fixed inset-0 z-[21] flex items-center justify-center pointer-events-none">
@@ -227,7 +226,7 @@
 				class="relative pointer-events-auto transition-none duration-0 origin-center w-fit h-fit border border-white rounded-2xl funding-box max-sm:w-[350px] max-sm:max-h-[85vh] max-sm:overflow-y-auto"
 			>
 			<div
-				class="absolute right-[0] top-[calc(50%_+_11px)] -translate-y-[50%] translate-x-[calc(100%_+_20px)] max-sm:hidden"
+				class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-[calc(100%+20px)] max-sm:hidden"
 			>
 				<FloatingTable position={index} valuation={data.type === 'priced' ? data.valuation : undefined} />
 			</div>

@@ -42,13 +42,13 @@
 </script>
 
 <div class="relative h-10 max-sm:h-[105px] group px-11 __event max-sm:px-0">
-	<div
-		class={cn(
-			'max-sm:hidden max-sm:group-hover:hidden absolute -right-[10px] top-[calc(50%_+_11px)] -translate-y-[50%] translate-x-[100%] group-hover:block hidden'
-		)}
-	>
-		<FloatingTable position={index} />
-	</div>
+	{#if !show}
+		<div
+			class="max-sm:hidden max-sm:group-hover:hidden absolute -right-[10px] top-[calc(50%_+_11px)] -translate-y-[50%] translate-x-[100%] group-hover:block hidden"
+		>
+			<FloatingTable position={index} />
+		</div>
+	{/if}
 	{#if show}
 		<!-- Overlay for centering -->
 		<div class="fixed inset-0 z-[21] flex items-center justify-center pointer-events-none">
@@ -59,7 +59,7 @@
 				class="relative pointer-events-auto w-[500px] max-sm:w-[350px] bg-bg transition-none duration-0 origin-center flex flex-col items-center h-fit funding-box border border-white rounded-2xl"
 			>
 			<div
-				class="max-sm:hidden absolute right-[0] top-[calc(50%_+_11px)] -translate-y-[50%] translate-x-[calc(100%_+_20px)]"
+				class="max-sm:hidden absolute right-0 top-1/2 -translate-y-1/2 translate-x-[calc(100%+20px)]"
 			>
 				<FloatingTable position={index} />
 			</div>
