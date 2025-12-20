@@ -224,7 +224,7 @@
 				id="funding-box"
 				out:box
 				in:box={{ delay: 50 }}
-				class="pointer-events-auto transition-none duration-0 origin-center w-fit h-fit border border-white rounded-2xl funding-box max-sm:w-[350px] max-sm:max-h-[85vh] max-sm:overflow-y-auto"
+				class="relative pointer-events-auto transition-none duration-0 origin-center w-fit h-fit border border-white rounded-2xl funding-box max-sm:w-[350px] max-sm:max-h-[85vh] max-sm:overflow-y-auto"
 			>
 			<div
 				class="absolute right-[0] top-[calc(50%_+_11px)] -translate-y-[50%] translate-x-[calc(100%_+_20px)] max-sm:hidden"
