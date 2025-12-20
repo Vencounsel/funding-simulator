@@ -48,6 +48,25 @@ const getFirstTable = (): CapTable => {
 	return table;
 };
 
+// Check if convertibles (SAFEs + notes) exceed 100% dilution
+export const getConvertiblesDilutionPercent = (firstPricedRound: PricedRound): number => {
+	const safesBase = getSafesValuations(firstPricedRound);
+	const notesBase = getConvertibleNotesValuations(firstPricedRound);
+
+	const safesWithMFN = getSafesWithMFN(safesBase, notesBase);
+	const notesWithMFN = getConvertibleNotesWithMFN(notesBase, safesBase);
+
+	const totalSafesDilution = safesWithMFN.reduce((prev, curr) => {
+		return prev + curr.amount / curr.valuation;
+	}, 0);
+
+	const totalNotesDilution = notesWithMFN.reduce((prev, curr) => {
+		return prev + curr.totalAmount / curr.valuation;
+	}, 0);
+
+	return (totalSafesDilution + totalNotesDilution) * 100;
+};
+
 export const getSafesValuations = (firstPricedRound: PricedRound) => {
 	const events = get(_events);
 	return (events.filter((e) => e.type === 'safe') as Safe[]).map((safe) => {
@@ -97,10 +116,16 @@ export const getSafes = (firstPricedRound: PricedRound, totalShares: number) => 
 		return prev + curr.amount / curr.valuation;
 	}, 0);
 
-	const newTotal = totalShares / (1 - totalSafesDilution);
+	// Cap total dilution to prevent negative equity (max 99.9% dilution from SAFEs)
+	const cappedDilution = Math.min(totalSafesDilution, 0.999);
+	const newTotal = totalShares / (1 - cappedDilution);
+
+	// Calculate proportional shares when dilution is capped
+	const dilutionRatio = cappedDilution / (totalSafesDilution || 1);
 
 	safesWithMFN.forEach((safe) => {
-		safesTables[safe.name] = newTotal * (safe.amount / safe.valuation!);
+		const effectiveDilution = (safe.amount / safe.valuation!) * dilutionRatio;
+		safesTables[safe.name] = newTotal * effectiveDilution;
 	});
 
 	return safesTables;
@@ -183,10 +208,16 @@ export const getConvertibleNotes = (firstPricedRound: PricedRound, totalShares: 
 		return prev + curr.amount / curr.valuation;
 	}, 0);
 
-	const newTotal = totalShares / (1 - totalSafesDilution - totalNotesDilution);
+	// Cap total dilution to prevent negative equity (max 99.9% dilution from SAFEs/notes)
+	const totalDilution = Math.min(totalSafesDilution + totalNotesDilution, 0.999);
+	const newTotal = totalShares / (1 - totalDilution);
+
+	// Calculate proportional shares for each note when dilution is capped
+	const dilutionRatio = totalDilution / (totalSafesDilution + totalNotesDilution || 1);
 
 	notesWithMFN.forEach((note) => {
-		notesTables[note.name] = newTotal * (note.totalAmount / note.valuation);
+		const effectiveDilution = (note.totalAmount / note.valuation) * dilutionRatio;
+		notesTables[note.name] = newTotal * effectiveDilution;
 	});
 
 	return notesTables;
@@ -212,10 +243,16 @@ export const getSafesWithNotes = (firstPricedRound: PricedRound, totalShares: nu
 		return prev + curr.totalAmount / curr.valuation;
 	}, 0);
 
-	const newTotal = totalShares / (1 - totalSafesDilution - totalNotesDilution);
+	// Cap total dilution to prevent negative equity (max 99.9% dilution from SAFEs/notes)
+	const totalDilution = Math.min(totalSafesDilution + totalNotesDilution, 0.999);
+	const newTotal = totalShares / (1 - totalDilution);
+
+	// Calculate proportional shares for each SAFE when dilution is capped
+	const dilutionRatio = totalDilution / (totalSafesDilution + totalNotesDilution || 1);
 
 	safesWithMFN.forEach((safe) => {
-		safesTables[safe.name] = newTotal * (safe.amount / safe.valuation!);
+		const effectiveDilution = (safe.amount / safe.valuation!) * dilutionRatio;
+		safesTables[safe.name] = newTotal * effectiveDilution;
 	});
 
 	return safesTables;

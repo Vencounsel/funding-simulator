@@ -8,7 +8,6 @@
 	import { events, founders, tables } from '$lib/store';
 	import { get } from 'svelte/store';
 	import type { Safe, Accelerator } from '$lib/types';
-	import AcceleratorIcon from '$lib/icons/AcceleratorIcon.svelte';
 
 	export let position: number;
 	export let valuation: number | undefined = undefined;
@@ -114,8 +113,8 @@
 	$: optionsLines = lines.filter((l) => l.type === 'options');
 </script>
 
-<div class="flex flex-col items-center z-[1] w-max bg-bg pl-4 -ml-4 max-sm:pl-0 max-sm:-ml-0 max-sm:w-full max-sm:max-w-[340px]">
-	<div class="flex flex-col text-sm rounded-lg border-[3px] p-3 py-2 border-borderLight">
+<div class="flex flex-col items-center z-[1] w-max max-sm:w-full max-sm:max-w-[340px]">
+	<div class="flex flex-col text-sm rounded-lg border-[3px] p-3 py-2 border-borderLight bg-white shadow-lg">
 		<!-- Column Headers -->
 		<div class="flex text-[10px] gap-6 justify-between px-2 -mx-2 pb-1 mb-1 border-b border-borderLight text-textLight uppercase tracking-wide">
 			<div class="shrink-0 min-w-[70px]"></div>
@@ -174,11 +173,8 @@
 			<div
 				class="group/line hover:bg-borderLight p-0.5 px-2 -mx-2 flex text-xs gap-6 justify-between border-borderLight last:border-none"
 			>
-				<div class="shrink-0 min-w-[70px] text-textDark flex items-center gap-1">
+				<div class="shrink-0 min-w-[70px] text-textDark">
 					{line.label}
-					{#if line.isAcceleratorGroup}
-						<span class="w-3 h-3 text-primary"><AcceleratorIcon /></span>
-					{/if}
 				</div>
 				<div class="text-textDark">
 					{line.equity.toFixed(1)}%

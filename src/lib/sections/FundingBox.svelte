@@ -15,7 +15,8 @@
 		getSafesWithNotes,
 		getConvertibleNotes,
 		getTableTotalShares,
-		getConvertibleNoteAccruedAmount
+		getConvertibleNoteAccruedAmount,
+		getConvertiblesDilutionPercent
 	} from '$lib/calculations';
 	import tippy from 'svelte-tippy';
 
@@ -202,6 +203,11 @@
 	$: showOptionsLine = dilutions && dilutions.options > 0;
 	$: showSafesLine = dilutions && dilutions.safes > 0;
 	$: showNotesLine = dilutions && dilutions.notes > 0;
+
+	// Check if convertibles exceed 100% equity
+	$: convertiblesExceed100 = data.type === 'priced' && isFirstPriced
+		? getConvertiblesDilutionPercent(data) > 100
+		: false;
 
 	$: participatingProRatas =
 		(data.type === 'priced' &&
@@ -523,10 +529,17 @@
 					<div
 						class="bg-bg flex items-center justify-center gap-4 py-5 min-h-[180px] rounded-b-2xl max-sm:flex-col max-sm:items-center max-sm:h-fit"
 					>
-						<div>
-							Total equity sold: <span class="text-primary mr-2"
-								>{dilutions?.total.toFixed(1)}%</span
-							>
+						<div class="flex flex-col items-center gap-2 px-4">
+							<div>
+								Total equity sold: <span class="text-primary"
+									>{dilutions?.total.toFixed(1)}%</span
+								>
+							</div>
+							{#if convertiblesExceed100}
+								<div class="text-red-600 text-xs font-medium text-center px-3 py-1.5 bg-red-50 rounded-lg border border-red-200 max-w-[200px]">
+									🚨 Invalid: Convertibles exceed 100% equity in company
+								</div>
+							{/if}
 						</div>
 						<div
 							class="text-xs flex flex-col justify-between gap-0 border-2 border-borderDark rounded-xl"
