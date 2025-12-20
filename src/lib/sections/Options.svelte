@@ -54,7 +54,7 @@
 			id="options-box"
 			out:box
 			in:box={{ delay: 50 }}
-			class="w-[500px] max-sm:w-[350px] bg-bg transition-none duration-0 origin-center flex flex-col items-center fixed inset-0 m-auto h-fit z-[21] funding-box border border-white rounded-2xl"
+			class="w-[500px] max-sm:w-[350px] bg-bg transition-none duration-0 origin-center flex flex-col items-center fixed top-[50%] left-[50%] -translate-x-[50%] -translate-y-[50%] h-fit z-[21] funding-box border border-white rounded-2xl"
 		>
 			<div
 				class="max-sm:hidden absolute right-[0] top-[calc(50%_+_11px)] -translate-y-[50%] translate-x-[calc(100%_+_20px)]"
