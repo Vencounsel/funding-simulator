@@ -41,15 +41,15 @@
 			return '140px';
 		}
 
-		if (!nextEvent) return '70px';
+		if (!nextEvent) return '90px';
 
 		// 140px before any priced round
 		if (nextEvent.type === 'priced') {
 			return '140px';
 		}
 
-		// 70px between SAFEs and/or Convertible Notes
-		return '70px';
+		// 90px between SAFEs and/or Convertible Notes
+		return '90px';
 	};
 </script>
 
