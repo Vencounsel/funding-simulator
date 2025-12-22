@@ -49,9 +49,15 @@ const getFirstTable = (): CapTable => {
 };
 
 // Check if convertibles (SAFEs + notes) exceed 100% dilution
-export const getConvertiblesDilutionPercent = (firstPricedRound: PricedRound): number => {
-	const safesBase = getSafesValuations(firstPricedRound);
-	const notesBase = getConvertibleNotesValuations(firstPricedRound);
+// afterIndex: only include SAFEs/notes with eventIndex > afterIndex (-1 means all)
+// beforeOrAtIndex: only include SAFEs/notes with eventIndex <= beforeOrAtIndex
+export const getConvertiblesDilutionPercent = (
+	pricedRound: PricedRound,
+	afterIndex: number = -1,
+	beforeOrAtIndex?: number
+): number => {
+	const safesBase = getSafesValuations(pricedRound, afterIndex, beforeOrAtIndex);
+	const notesBase = getConvertibleNotesValuations(pricedRound, afterIndex, beforeOrAtIndex);
 
 	const safesWithMFN = getSafesWithMFN(safesBase, notesBase);
 	const notesWithMFN = getConvertibleNotesWithMFN(notesBase, safesBase);
@@ -67,15 +73,27 @@ export const getConvertiblesDilutionPercent = (firstPricedRound: PricedRound): n
 	return (totalSafesDilution + totalNotesDilution) * 100;
 };
 
-export const getSafesValuations = (firstPricedRound: PricedRound) => {
+// Get SAFEs valuations, optionally filtered by event index range
+// afterIndex: only include SAFEs with eventIndex > afterIndex (-1 means all)
+// beforeOrAtIndex: only include SAFEs with eventIndex <= beforeOrAtIndex
+export const getSafesValuations = (
+	pricedRound: PricedRound,
+	afterIndex: number = -1,
+	beforeOrAtIndex?: number
+) => {
 	const events = get(_events);
-	return (events.filter((e) => e.type === 'safe') as Safe[]).map((safe) => {
-		let valuation = firstPricedRound.valuation;
+	const maxIndex = beforeOrAtIndex ?? events.length - 1;
+
+	return (events.filter((e, idx) =>
+		e.type === 'safe' && idx > afterIndex && idx <= maxIndex
+	) as Safe[]).map((safe) => {
+		let valuation = pricedRound.valuation;
 		if (safe.valCap && safe.discount)
-			valuation = Math.min(safe.valCap, firstPricedRound.valuation * (1 - safe.discount / 100));
-		if (safe.valCap && !safe.discount) valuation = safe.valCap;
+			valuation = Math.min(safe.valCap, pricedRound.valuation * (1 - safe.discount / 100));
+		// Use lower of cap or round valuation (cap protects investor from high valuations)
+		if (safe.valCap && !safe.discount) valuation = Math.min(safe.valCap, pricedRound.valuation);
 		if (!safe.valCap && safe.discount)
-			valuation = firstPricedRound.valuation * (1 - safe.discount / 100);
+			valuation = pricedRound.valuation * (1 - safe.discount / 100);
 		// Track original position in events array for MFN ordering
 		const eventIndex = events.findIndex((e) => e.type === 'safe' && e.name === safe.name);
 		return {
@@ -142,18 +160,29 @@ export const getConvertibleNoteAccruedAmount = (note: ConvertibleNote, monthsToC
 };
 
 // Get convertible notes with their valuations calculated
-export const getConvertibleNotesValuations = (firstPricedRound: PricedRound) => {
+// afterIndex: only include notes with eventIndex > afterIndex (-1 means all)
+// beforeOrAtIndex: only include notes with eventIndex <= beforeOrAtIndex
+export const getConvertibleNotesValuations = (
+	pricedRound: PricedRound,
+	afterIndex: number = -1,
+	beforeOrAtIndex?: number
+) => {
 	const events = get(_events);
-	return (events.filter((e) => e.type === 'convertible') as ConvertibleNote[]).map((note) => {
-		let valuation = firstPricedRound.valuation;
+	const maxIndex = beforeOrAtIndex ?? events.length - 1;
+
+	return (events.filter((e, idx) =>
+		e.type === 'convertible' && idx > afterIndex && idx <= maxIndex
+	) as ConvertibleNote[]).map((note) => {
+		let valuation = pricedRound.valuation;
 		// Use monthsToRound from priced round to calculate interest (converts at earlier of priced round or maturity)
-		const totalAmount = getConvertibleNoteAccruedAmount(note, firstPricedRound.monthsToRound);
+		const totalAmount = getConvertibleNoteAccruedAmount(note, pricedRound.monthsToRound);
 
 		if (note.valCap && note.discount)
-			valuation = Math.min(note.valCap, firstPricedRound.valuation * (1 - note.discount / 100));
-		if (note.valCap && !note.discount) valuation = note.valCap;
+			valuation = Math.min(note.valCap, pricedRound.valuation * (1 - note.discount / 100));
+		// Use lower of cap or round valuation (cap protects investor from high valuations)
+		if (note.valCap && !note.discount) valuation = Math.min(note.valCap, pricedRound.valuation);
 		if (!note.valCap && note.discount)
-			valuation = firstPricedRound.valuation * (1 - note.discount / 100);
+			valuation = pricedRound.valuation * (1 - note.discount / 100);
 
 		// Track original position in events array for MFN ordering
 		const eventIndex = events.findIndex((e) => e.type === 'convertible' && e.name === note.name);
@@ -188,13 +217,19 @@ export const getConvertibleNotesWithMFN = (
 		};
 	});
 
-// Get convertible notes as shares at first priced round
-export const getConvertibleNotes = (firstPricedRound: PricedRound, totalShares: number) => {
+// Get convertible notes as shares at a priced round
+// afterIndex/beforeOrAtIndex: filter which notes to include
+export const getConvertibleNotes = (
+	pricedRound: PricedRound,
+	totalShares: number,
+	afterIndex: number = -1,
+	beforeOrAtIndex?: number
+) => {
 	const notesTables: CapTable = {};
 
-	// Get base valuations first (before MFN)
-	const safesBase = getSafesValuations(firstPricedRound);
-	const notesBase = getConvertibleNotesValuations(firstPricedRound);
+	// Get base valuations first (before MFN) - filtered by index range
+	const safesBase = getSafesValuations(pricedRound, afterIndex, beforeOrAtIndex);
+	const notesBase = getConvertibleNotesValuations(pricedRound, afterIndex, beforeOrAtIndex);
 
 	// Apply MFN - each considers the other for most favorable terms
 	const notesWithMFN = getConvertibleNotesWithMFN(notesBase, safesBase);
@@ -223,13 +258,19 @@ export const getConvertibleNotes = (firstPricedRound: PricedRound, totalShares: 
 	return notesTables;
 };
 
-// Updated getSafes to account for convertible notes in dilution calculation
-export const getSafesWithNotes = (firstPricedRound: PricedRound, totalShares: number) => {
+// Get SAFEs as shares at a priced round, accounting for convertible notes
+// afterIndex/beforeOrAtIndex: filter which SAFEs to include
+export const getSafesWithNotes = (
+	pricedRound: PricedRound,
+	totalShares: number,
+	afterIndex: number = -1,
+	beforeOrAtIndex?: number
+) => {
 	const safesTables: CapTable = {};
 
-	// Get base valuations first (before MFN)
-	const safesBase = getSafesValuations(firstPricedRound);
-	const notesBase = getConvertibleNotesValuations(firstPricedRound);
+	// Get base valuations first (before MFN) - filtered by index range
+	const safesBase = getSafesValuations(pricedRound, afterIndex, beforeOrAtIndex);
+	const notesBase = getConvertibleNotesValuations(pricedRound, afterIndex, beforeOrAtIndex);
 
 	// Apply MFN - each considers the other for most favorable terms
 	const notesWithMFN = getConvertibleNotesWithMFN(notesBase, safesBase);
@@ -324,21 +365,28 @@ export const addTables = (oldTable: CapTable, table: CapTable) => {
 	});
 };
 
-export const getNewTable = (event: Event, previousTable: CapTable, firstPricedRound: boolean) => {
+// lastPricedRoundIndex: index of the last priced round (-1 if none)
+// currentEventIndex: index of the current event being processed
+export const getNewTable = (
+	event: Event,
+	previousTable: CapTable,
+	lastPricedRoundIndex: number,
+	currentEventIndex: number
+) => {
 	let newTable: CapTable = {};
 	const oldTotal = getTableTotalShares(previousTable);
 	const getCurrentTotal = () => getTableTotalShares(newTable) + oldTotal;
+	const isFirstPricedRound = lastPricedRoundIndex === -1;
 
 	if (event.type === 'priced') {
 		let safes: CapTable = {};
 		let notes: CapTable = {};
-		if (firstPricedRound) {
-			// Use the updated function that accounts for both SAFEs and convertible notes
-			safes = getSafesWithNotes(event, oldTotal);
-			notes = getConvertibleNotes(event, oldTotal);
-			newTable = addTables(newTable, safes);
-			newTable = addTables(newTable, notes);
-		}
+		// Convert SAFEs/notes issued after the last priced round (or from beginning if first)
+		safes = getSafesWithNotes(event, oldTotal, lastPricedRoundIndex, currentEventIndex);
+		notes = getConvertibleNotes(event, oldTotal, lastPricedRoundIndex, currentEventIndex);
+		newTable = addTables(newTable, safes);
+		newTable = addTables(newTable, notes);
+
 		let futureTotal = 0;
 		let newOptions = 0;
 		if (event.options) {
@@ -361,7 +409,7 @@ export const getNewTable = (event: Event, previousTable: CapTable, firstPricedRo
 		const newInvestorsShares = newShares - newOptions;
 
 		const proRatas = getProRatas({
-			firstPricedRound,
+			firstPricedRound: isFirstPricedRound,
 			event,
 			newShares: newInvestorsShares,
 			current: addTables(previousTable, newTable),
@@ -397,37 +445,73 @@ export const getCapTables = (): CapTable[] => {
 	const exit = get(_exit);
 	const tables: CapTable[] = [getFirstTable()];
 
-	let foundFirstPricedRound = false;
+	let lastPricedRoundIndex = -1;
 
-	events.forEach((event) => {
+	events.forEach((event, index) => {
 		tables.push(
 			getNewTable(
 				event,
 				tables[tables.length - 1],
-				event.type === 'priced' && !foundFirstPricedRound
+				lastPricedRoundIndex,
+				index
 			)
 		);
 		if (event.type === 'priced') {
-			foundFirstPricedRound = true;
+			lastPricedRoundIndex = index;
 		}
 	});
 
 	if (exit?.amount) {
-		// distribute remaining available options
-		const lastTable = tables[tables.length - 1];
+		let currentTable = tables[tables.length - 1];
+
+		// Convert any unconverted SAFEs/notes at exit
+		// These are SAFEs/notes issued after the last priced round
+		const unconvertedSafes = (events.filter((e, idx) =>
+			e.type === 'safe' && idx > lastPricedRoundIndex
+		) as Safe[]);
+		const unconvertedNotes = (events.filter((e, idx) =>
+			e.type === 'convertible' && idx > lastPricedRoundIndex
+		) as ConvertibleNote[]);
+
+		if (unconvertedSafes.length > 0 || unconvertedNotes.length > 0) {
+			// Create a virtual priced round for exit conversion
+			// Use exit amount as valuation (company is worth what it sells for)
+			const exitPricedRound: PricedRound = {
+				type: 'priced',
+				name: 'Exit',
+				amount: 0, // No new investment at exit
+				valuation: exit.amount,
+				options: 0,
+				proRata: false,
+				participations: [],
+				monthsToRound: 12 // Default for interest calculation
+			};
+
+			const oldTotal = getTableTotalShares(currentTable);
+
+			// Get SAFEs and notes that need to convert at exit
+			const safesTable = getSafesWithNotes(exitPricedRound, oldTotal, lastPricedRoundIndex, events.length - 1);
+			const notesTable = getConvertibleNotes(exitPricedRound, oldTotal, lastPricedRoundIndex, events.length - 1);
+
+			currentTable = addTables(currentTable, safesTable);
+			currentTable = addTables(currentTable, notesTable);
+			tables.push(currentTable);
+		}
+
+		// Distribute remaining available options
 		const distributedOptions: CapTable = {};
-		const availableOptions = lastTable[AVAILABLE_OPTIONS_LABEL];
+		const availableOptions = currentTable[AVAILABLE_OPTIONS_LABEL];
 		if (availableOptions) {
-			const total = getTableTotalShares(lastTable) - availableOptions;
-			Object.keys(lastTable).forEach((key) => {
+			const total = getTableTotalShares(currentTable) - availableOptions;
+			Object.keys(currentTable).forEach((key) => {
 				if (key === AVAILABLE_OPTIONS_LABEL) {
 					distributedOptions[AVAILABLE_OPTIONS_LABEL] = -availableOptions;
 				} else {
-					const newShares = (lastTable?.[key] / total) * availableOptions;
+					const newShares = (currentTable?.[key] / total) * availableOptions;
 					distributedOptions[key] = newShares;
 				}
 			});
-			tables.push(addTables(lastTable, distributedOptions));
+			tables.push(addTables(currentTable, distributedOptions));
 		}
 	}
 

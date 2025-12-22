@@ -119,9 +119,11 @@
 
 	$: showExit =
 		$events.slice(0, position).some((e) => e.type === 'priced') && position === $events.length;
-	$: showSafe = !$events.slice(0, position).some((e) => e.type === 'priced');
-	$: showNote = !$events.slice(0, position).some((e) => e.type === 'priced');
-	$: showPriced = !$events.slice(position).some((e) => e.type === 'safe' || e.type === 'convertible');
+	// SAFEs and notes can be added at any point - they convert at the next priced round
+	$: showSafe = true;
+	$: showNote = true;
+	// Priced rounds can be added at any point - SAFEs/notes before it will convert
+	$: showPriced = true;
 </script>
 
 <div

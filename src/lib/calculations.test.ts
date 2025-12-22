@@ -1271,9 +1271,8 @@ describe('Comprehensive Math Verification', () => {
     });
 
     it('9.2 Bridge round: convertible note between rounds', () => {
-      // Note: In the current implementation, ALL convertible notes convert at the
-      // first priced round, regardless of when they were issued in the event sequence.
-      // This test verifies the actual behavior.
+      // Bridge notes issued AFTER a priced round convert at the NEXT priced round.
+      // This test verifies that the Bridge note converts at Series A, not Seed.
       setupTest([
         { id: '1', name: 'Founder', equity: 100, isYou: true }
       ], [
@@ -1311,25 +1310,29 @@ describe('Comprehensive Math Verification', () => {
       ]);
 
       const tables = calculations.getCapTables();
-      const final = tables[tables.length - 1];
-      const total = calculations.getTableTotalShares(final);
+      // tables: [Initial, AfterSeed, AfterBridge (no change), AfterSeriesA]
+      const afterSeed = tables[1]; // Table after Seed round
+      const afterSeriesA = tables[3]; // Table after Series A
+      const total = calculations.getTableTotalShares(afterSeriesA);
 
-      // Current implementation: Bridge converts at Seed (first priced round)
-      // even though it's listed after Seed in the events array
-      expect(final['Bridge']).toBeGreaterThan(0);
+      // Bridge should NOT appear after Seed (it converts at Series A)
+      expect(afterSeed['Bridge']).toBeUndefined();
 
-      // Series A percentage is affected by:
-      // 1. Seed exercising pro-rata (takes some of the new shares)
-      // 2. Option pool being increased to 15%
-      // 3. Bridge note dilution from Seed round
-      const seriesAPct = getPercentage(final['Series A'], total);
-      expect(seriesAPct).toBeGreaterThan(10);
-      expect(seriesAPct).toBeLessThan(25);
+      // Bridge should appear after Series A
+      expect(afterSeriesA['Bridge']).toBeGreaterThan(0);
+
+      // Bridge converts at Series A valuation with 20% discount
+      // $500K * (1 + 10% * 18/12) = $575K with interest
+      // Discount valuation = $25M * 0.8 = $20M
+      // ~2.9% pre-Series A dilution, then diluted by Series A and options
+      const bridgePct = getPercentage(afterSeriesA['Bridge'], total);
+      expect(bridgePct).toBeGreaterThan(1.5);
+      expect(bridgePct).toBeLessThan(5);
 
       // Options: 15%
-      expectPercentageClose(getPercentage(final[calculations.AVAILABLE_OPTIONS_LABEL] || 0, total), 15, 1);
+      expectPercentageClose(getPercentage(afterSeriesA[calculations.AVAILABLE_OPTIONS_LABEL] || 0, total), 15, 1);
 
-      verifyCapTableIntegrity(final);
+      verifyCapTableIntegrity(afterSeriesA);
     });
 
     it('9.3 Full stack: 2 SAFEs + Note + Seed + Series A + Options', () => {
@@ -2599,6 +2602,615 @@ describe('Comprehensive Math Verification', () => {
       expectPercentageClose(getPercentage(final['Series A'], total), 20, 0.5);
 
       verifyCapTableIntegrity(final);
+    });
+  });
+
+  // ============================================
+  // SECTION 15: SAFE/NOTE INDEX-BASED CONVERSION
+  // ============================================
+  describe('15. SAFEs and Notes Convert at Next Priced Round', () => {
+    it('15.1 SAFE before first priced round converts at that round', () => {
+      setupTest([
+        { id: '1', name: 'Founder', equity: 100, isYou: true }
+      ], [
+        {
+          type: 'safe',
+          name: 'Pre-Seed SAFE',
+          amount: 500_000,
+          valCap: 5_000_000,
+          discount: 0,
+          mfn: false,
+          proRata: false
+        },
+        {
+          type: 'priced',
+          name: 'Seed',
+          amount: 1_000_000,
+          valuation: 5_000_000,
+          options: 0,
+          proRata: false,
+          participations: [],
+          monthsToRound: 12
+        }
+      ]);
+
+      const tables = calculations.getCapTables();
+      // tables: [Initial, AfterSAFE (no change), AfterSeed]
+      const afterSeed = tables[2];
+      const total = calculations.getTableTotalShares(afterSeed);
+
+      // SAFE should convert at Seed
+      expect(afterSeed['Pre-Seed SAFE']).toBeGreaterThan(0);
+      // SAFE at $5M cap = 10%
+      expectPercentageClose(getPercentage(afterSeed['Pre-Seed SAFE'], total), 8, 1); // ~8% after Seed dilution
+    });
+
+    it('15.2 SAFE after first priced round converts at second round', () => {
+      setupTest([
+        { id: '1', name: 'Founder', equity: 100, isYou: true }
+      ], [
+        {
+          type: 'priced',
+          name: 'Seed',
+          amount: 1_000_000,
+          valuation: 5_000_000,
+          options: 0,
+          proRata: false,
+          participations: [],
+          monthsToRound: 6
+        },
+        {
+          type: 'safe',
+          name: 'Bridge SAFE',
+          amount: 250_000,
+          valCap: 10_000_000,
+          discount: 0,
+          mfn: false,
+          proRata: false
+        },
+        {
+          type: 'priced',
+          name: 'Series A',
+          amount: 3_000_000,
+          valuation: 15_000_000,
+          options: 0,
+          proRata: false,
+          participations: [],
+          monthsToRound: 18
+        }
+      ]);
+
+      const tables = calculations.getCapTables();
+      // tables: [Initial, AfterSeed, AfterBridgeSAFE (no change), AfterSeriesA]
+      const afterSeed = tables[1];
+      const afterSeriesA = tables[3];
+
+      // Bridge SAFE should NOT be in cap table after Seed
+      expect(afterSeed['Bridge SAFE']).toBeUndefined();
+
+      // Bridge SAFE should appear after Series A
+      expect(afterSeriesA['Bridge SAFE']).toBeGreaterThan(0);
+
+      const total = calculations.getTableTotalShares(afterSeriesA);
+      // Bridge at $10M cap (capped at Series A $15M valuation)
+      // $250K / $10M = 2.5% pre-Series A, diluted by 20% = ~2%
+      const bridgePct = getPercentage(afterSeriesA['Bridge SAFE'], total);
+      expect(bridgePct).toBeGreaterThan(1.5);
+      expect(bridgePct).toBeLessThan(3);
+    });
+
+    it('15.3 Multiple SAFEs convert at appropriate rounds', () => {
+      setupTest([
+        { id: '1', name: 'Founder', equity: 100, isYou: true }
+      ], [
+        {
+          type: 'safe',
+          name: 'Angel SAFE',
+          amount: 200_000,
+          valCap: 4_000_000,
+          discount: 0,
+          mfn: false,
+          proRata: false
+        },
+        {
+          type: 'priced',
+          name: 'Seed',
+          amount: 1_000_000,
+          valuation: 5_000_000,
+          options: 0,
+          proRata: false,
+          participations: [],
+          monthsToRound: 6
+        },
+        {
+          type: 'safe',
+          name: 'Post-Seed SAFE',
+          amount: 300_000,
+          valCap: 12_000_000,
+          discount: 0,
+          mfn: false,
+          proRata: false
+        },
+        {
+          type: 'priced',
+          name: 'Series A',
+          amount: 4_000_000,
+          valuation: 20_000_000,
+          options: 0,
+          proRata: false,
+          participations: [],
+          monthsToRound: 18
+        }
+      ]);
+
+      const tables = calculations.getCapTables();
+      // tables: [Initial, AfterAngelSAFE (no change), AfterSeed, AfterPostSeedSAFE (no change), AfterSeriesA]
+      const afterSeed = tables[2];
+      const afterSeriesA = tables[4];
+
+      // Angel SAFE should convert at Seed
+      expect(afterSeed['Angel SAFE']).toBeGreaterThan(0);
+
+      // Post-Seed SAFE should NOT convert at Seed
+      expect(afterSeed['Post-Seed SAFE']).toBeUndefined();
+
+      // Both should be in cap table after Series A
+      expect(afterSeriesA['Angel SAFE']).toBeGreaterThan(0);
+      expect(afterSeriesA['Post-Seed SAFE']).toBeGreaterThan(0);
+
+      verifyCapTableIntegrity(afterSeriesA);
+    });
+
+    it('15.4 Convertible note after priced round converts at next round', () => {
+      setupTest([
+        { id: '1', name: 'Founder', equity: 100, isYou: true }
+      ], [
+        {
+          type: 'priced',
+          name: 'Seed',
+          amount: 1_000_000,
+          valuation: 5_000_000,
+          options: 10,
+          proRata: false,
+          participations: [],
+          monthsToRound: 6
+        },
+        {
+          type: 'convertible',
+          name: 'Bridge Note',
+          amount: 300_000,
+          interestRate: 8,
+          term: 18,
+          valCap: 15_000_000,
+          discount: 15,
+          mfn: false,
+          proRata: false
+        },
+        {
+          type: 'priced',
+          name: 'Series A',
+          amount: 5_000_000,
+          valuation: 25_000_000,
+          options: 0,
+          proRata: false,
+          participations: [],
+          monthsToRound: 24
+        }
+      ]);
+
+      const tables = calculations.getCapTables();
+      // tables: [Initial, AfterSeed, AfterBridgeNote (no change), AfterSeriesA]
+      const afterSeed = tables[1];
+      const afterSeriesA = tables[3];
+
+      // Bridge Note should NOT be in cap table after Seed
+      expect(afterSeed['Bridge Note']).toBeUndefined();
+
+      // Bridge Note should appear after Series A
+      expect(afterSeriesA['Bridge Note']).toBeGreaterThan(0);
+
+      verifyCapTableIntegrity(afterSeriesA);
+    });
+
+    it('15.5 SAFEs issued between multiple rounds convert appropriately', () => {
+      setupTest([
+        { id: '1', name: 'Founder', equity: 100, isYou: true }
+      ], [
+        {
+          type: 'safe',
+          name: 'Pre-Seed SAFE',
+          amount: 100_000,
+          valCap: 2_000_000,
+          discount: 0,
+          mfn: false,
+          proRata: false
+        },
+        {
+          type: 'priced',
+          name: 'Seed',
+          amount: 500_000,
+          valuation: 2_500_000,
+          options: 0,
+          proRata: false,
+          participations: [],
+          monthsToRound: 6
+        },
+        {
+          type: 'safe',
+          name: 'Post-Seed SAFE',
+          amount: 200_000,
+          valCap: 8_000_000,
+          discount: 0,
+          mfn: false,
+          proRata: false
+        },
+        {
+          type: 'priced',
+          name: 'Series A',
+          amount: 2_000_000,
+          valuation: 10_000_000,
+          options: 0,
+          proRata: false,
+          participations: [],
+          monthsToRound: 12
+        },
+        {
+          type: 'safe',
+          name: 'Post-A SAFE',
+          amount: 500_000,
+          valCap: 40_000_000,
+          discount: 0,
+          mfn: false,
+          proRata: false
+        },
+        {
+          type: 'priced',
+          name: 'Series B',
+          amount: 10_000_000,
+          valuation: 50_000_000,
+          options: 0,
+          proRata: false,
+          participations: [],
+          monthsToRound: 24
+        }
+      ]);
+
+      const tables = calculations.getCapTables();
+      // tables: [Initial, AfterPreSeedSAFE, AfterSeed, AfterPostSeedSAFE, AfterSeriesA, AfterPostASAFE, AfterSeriesB]
+      const afterSeed = tables[2];
+      const afterSeriesA = tables[4];
+      const afterSeriesB = tables[6];
+
+      // Pre-Seed SAFE converts at Seed
+      expect(afterSeed['Pre-Seed SAFE']).toBeGreaterThan(0);
+      expect(afterSeed['Post-Seed SAFE']).toBeUndefined();
+      expect(afterSeed['Post-A SAFE']).toBeUndefined();
+
+      // Post-Seed SAFE converts at Series A
+      expect(afterSeriesA['Post-Seed SAFE']).toBeGreaterThan(0);
+      expect(afterSeriesA['Post-A SAFE']).toBeUndefined();
+
+      // Post-A SAFE converts at Series B
+      expect(afterSeriesB['Post-A SAFE']).toBeGreaterThan(0);
+
+      // All should be in final cap table
+      expect(afterSeriesB['Pre-Seed SAFE']).toBeGreaterThan(0);
+      expect(afterSeriesB['Post-Seed SAFE']).toBeGreaterThan(0);
+      expect(afterSeriesB['Post-A SAFE']).toBeGreaterThan(0);
+
+      verifyCapTableIntegrity(afterSeriesB);
+    });
+
+    it('15.6 No conversion without a subsequent priced round', () => {
+      setupTest([
+        { id: '1', name: 'Founder', equity: 100, isYou: true }
+      ], [
+        {
+          type: 'priced',
+          name: 'Seed',
+          amount: 1_000_000,
+          valuation: 5_000_000,
+          options: 0,
+          proRata: false,
+          participations: [],
+          monthsToRound: 6
+        },
+        {
+          type: 'safe',
+          name: 'Unconverted SAFE',
+          amount: 250_000,
+          valCap: 10_000_000,
+          discount: 0,
+          mfn: false,
+          proRata: false
+        }
+      ]);
+
+      const tables = calculations.getCapTables();
+      // tables: [Initial, AfterSeed, AfterUnconvertedSAFE (no change)]
+      const finalTable = tables[tables.length - 1];
+
+      // SAFE should NOT be in cap table (no subsequent priced round)
+      expect(finalTable['Unconverted SAFE']).toBeUndefined();
+
+      // Only Founder and Seed should have shares
+      expect(Object.keys(finalTable)).toContain('Founder');
+      expect(Object.keys(finalTable)).toContain('Seed');
+    });
+  });
+
+  // ============================================
+  // SECTION 16: EXIT CONVERSION FOR SAFEs/NOTES
+  // ============================================
+  describe('16. SAFEs and Notes Convert at Exit', () => {
+    it('16.1 SAFE after priced round converts at exit', () => {
+      setupTest([
+        { id: '1', name: 'Founder', equity: 100, isYou: true }
+      ], [
+        {
+          type: 'priced',
+          name: 'Seed',
+          amount: 1_000_000,
+          valuation: 5_000_000,
+          options: 0,
+          proRata: false,
+          participations: [],
+          monthsToRound: 6
+        },
+        {
+          type: 'safe',
+          name: 'Bridge SAFE',
+          amount: 500_000,
+          valCap: 10_000_000,
+          discount: 0,
+          mfn: false,
+          proRata: false
+        }
+      ], { amount: 50_000_000, tax: 0 }); // $50M exit
+
+      const tables = calculations.getCapTables();
+      const finalTable = tables[tables.length - 1];
+      const total = calculations.getTableTotalShares(finalTable);
+
+      // Bridge SAFE should be in final cap table (converted at exit)
+      expect(finalTable['Bridge SAFE']).toBeGreaterThan(0);
+
+      // SAFE at $10M cap with $50M exit -> converts at cap
+      // $500K / $10M = 5% ownership
+      const bridgePct = getPercentage(finalTable['Bridge SAFE'], total);
+      expect(bridgePct).toBeGreaterThan(3);
+      expect(bridgePct).toBeLessThan(6);
+
+      verifyCapTableIntegrity(finalTable);
+    });
+
+    it('16.2 Convertible note after priced round converts at exit', () => {
+      setupTest([
+        { id: '1', name: 'Founder', equity: 100, isYou: true }
+      ], [
+        {
+          type: 'priced',
+          name: 'Seed',
+          amount: 1_000_000,
+          valuation: 5_000_000,
+          options: 10,
+          proRata: false,
+          participations: [],
+          monthsToRound: 6
+        },
+        {
+          type: 'convertible',
+          name: 'Bridge Note',
+          amount: 300_000,
+          interestRate: 8,
+          term: 24,
+          valCap: 15_000_000,
+          discount: 0,
+          mfn: false,
+          proRata: false
+        }
+      ], { amount: 30_000_000, tax: 0 }); // $30M exit
+
+      const tables = calculations.getCapTables();
+      const finalTable = tables[tables.length - 1];
+      const total = calculations.getTableTotalShares(finalTable);
+
+      // Bridge Note should be in final cap table (converted at exit)
+      expect(finalTable['Bridge Note']).toBeGreaterThan(0);
+
+      // Note with interest at $15M cap
+      const notePct = getPercentage(finalTable['Bridge Note'], total);
+      expect(notePct).toBeGreaterThan(1);
+      expect(notePct).toBeLessThan(4);
+
+      verifyCapTableIntegrity(finalTable);
+    });
+
+    it('16.3 Multiple SAFEs/notes convert at exit', () => {
+      setupTest([
+        { id: '1', name: 'Founder', equity: 100, isYou: true }
+      ], [
+        {
+          type: 'priced',
+          name: 'Seed',
+          amount: 1_000_000,
+          valuation: 5_000_000,
+          options: 0,
+          proRata: false,
+          participations: [],
+          monthsToRound: 6
+        },
+        {
+          type: 'safe',
+          name: 'SAFE 1',
+          amount: 250_000,
+          valCap: 10_000_000,
+          discount: 0,
+          mfn: false,
+          proRata: false
+        },
+        {
+          type: 'safe',
+          name: 'SAFE 2',
+          amount: 500_000,
+          valCap: 20_000_000,
+          discount: 0,
+          mfn: false,
+          proRata: false
+        },
+        {
+          type: 'convertible',
+          name: 'Note',
+          amount: 200_000,
+          interestRate: 6,
+          term: 12,
+          valCap: 15_000_000,
+          discount: 0,
+          mfn: false,
+          proRata: false
+        }
+      ], { amount: 100_000_000, tax: 0 }); // $100M exit
+
+      const tables = calculations.getCapTables();
+      const finalTable = tables[tables.length - 1];
+      const total = calculations.getTableTotalShares(finalTable);
+
+      // All should be in final cap table
+      expect(finalTable['SAFE 1']).toBeGreaterThan(0);
+      expect(finalTable['SAFE 2']).toBeGreaterThan(0);
+      expect(finalTable['Note']).toBeGreaterThan(0);
+
+      // SAFE 1 at $10M cap should have more % than SAFE 2 at $20M cap
+      // (same amount would mean same %, but SAFE 1 invested less at lower cap)
+      const safe1Pct = getPercentage(finalTable['SAFE 1'], total);
+      const safe2Pct = getPercentage(finalTable['SAFE 2'], total);
+      // $250K / $10M = 2.5% vs $500K / $20M = 2.5% - roughly equal
+      expect(Math.abs(safe1Pct - safe2Pct)).toBeLessThan(1);
+
+      verifyCapTableIntegrity(finalTable);
+    });
+
+    it('16.4 Exit valuation lower than SAFE cap uses exit valuation', () => {
+      setupTest([
+        { id: '1', name: 'Founder', equity: 100, isYou: true }
+      ], [
+        {
+          type: 'priced',
+          name: 'Seed',
+          amount: 1_000_000,
+          valuation: 5_000_000,
+          options: 0,
+          proRata: false,
+          participations: [],
+          monthsToRound: 6
+        },
+        {
+          type: 'safe',
+          name: 'High Cap SAFE',
+          amount: 500_000,
+          valCap: 50_000_000, // Very high cap
+          discount: 0,
+          mfn: false,
+          proRata: false
+        }
+      ], { amount: 10_000_000, tax: 0 }); // $10M exit (below cap)
+
+      const tables = calculations.getCapTables();
+      const finalTable = tables[tables.length - 1];
+      const total = calculations.getTableTotalShares(finalTable);
+
+      // SAFE should convert at exit valuation since it's lower than cap
+      // $500K / $10M = 5%
+      expect(finalTable['High Cap SAFE']).toBeGreaterThan(0);
+      const safePct = getPercentage(finalTable['High Cap SAFE'], total);
+      expect(safePct).toBeGreaterThan(3);
+      expect(safePct).toBeLessThan(7);
+
+      verifyCapTableIntegrity(finalTable);
+    });
+
+    it('16.5 Pre-exit SAFEs still convert at priced round, not exit', () => {
+      setupTest([
+        { id: '1', name: 'Founder', equity: 100, isYou: true }
+      ], [
+        {
+          type: 'safe',
+          name: 'Pre-Seed SAFE',
+          amount: 200_000,
+          valCap: 4_000_000,
+          discount: 0,
+          mfn: false,
+          proRata: false
+        },
+        {
+          type: 'priced',
+          name: 'Seed',
+          amount: 1_000_000,
+          valuation: 5_000_000,
+          options: 0,
+          proRata: false,
+          participations: [],
+          monthsToRound: 6
+        },
+        {
+          type: 'safe',
+          name: 'Post-Seed SAFE',
+          amount: 300_000,
+          valCap: 10_000_000,
+          discount: 0,
+          mfn: false,
+          proRata: false
+        }
+      ], { amount: 50_000_000, tax: 0 });
+
+      const tables = calculations.getCapTables();
+      // Check table after Seed (before exit)
+      const afterSeed = tables[2]; // [Initial, AfterPreSeedSAFE, AfterSeed, ...]
+
+      // Pre-Seed SAFE should have converted at Seed
+      expect(afterSeed['Pre-Seed SAFE']).toBeGreaterThan(0);
+
+      // Post-Seed SAFE should NOT be in afterSeed table
+      expect(afterSeed['Post-Seed SAFE']).toBeUndefined();
+
+      // But both should be in final table after exit
+      const finalTable = tables[tables.length - 1];
+      expect(finalTable['Pre-Seed SAFE']).toBeGreaterThan(0);
+      expect(finalTable['Post-Seed SAFE']).toBeGreaterThan(0);
+
+      verifyCapTableIntegrity(finalTable);
+    });
+
+    it('16.6 No exit means SAFE stays unconverted', () => {
+      setupTest([
+        { id: '1', name: 'Founder', equity: 100, isYou: true }
+      ], [
+        {
+          type: 'priced',
+          name: 'Seed',
+          amount: 1_000_000,
+          valuation: 5_000_000,
+          options: 0,
+          proRata: false,
+          participations: [],
+          monthsToRound: 6
+        },
+        {
+          type: 'safe',
+          name: 'Unconverted SAFE',
+          amount: 500_000,
+          valCap: 10_000_000,
+          discount: 0,
+          mfn: false,
+          proRata: false
+        }
+      ]); // No exit
+
+      const tables = calculations.getCapTables();
+      const finalTable = tables[tables.length - 1];
+
+      // SAFE should NOT be in cap table (no exit, no priced round after)
+      expect(finalTable['Unconverted SAFE']).toBeUndefined();
     });
   });
 });
