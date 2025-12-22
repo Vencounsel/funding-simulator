@@ -1,0 +1,7 @@
+# Venture Sim by VenCounsel
+# https://sim.vencounsel.com
+
+User-agent: *
+Allow: /
+
+Sitemap: https://sim.vencounsel.com/sitemap.xml
