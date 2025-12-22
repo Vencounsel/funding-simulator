@@ -1,6 +1,6 @@
 # Venture Finance Sim
 
-A visual simulator for startup founders to understand how fundraising impacts equity ownership from founding to exit.
+Venture Sim by VenCounsel — Free startup funding calculator for SAFEs, convertible notes, priced rounds, cap tables, and founder dilution. for startup founders to understand how fundraising impacts equity ownership from founding to exit.
 
 **Live at [sim.vencounsel.com](https://sim.vencounsel.com)**
 
