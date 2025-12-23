@@ -16,7 +16,8 @@
 		getConvertibleNotes,
 		getTableTotalShares,
 		getConvertibleNoteAccruedAmount,
-		getConvertiblesDilutionPercent
+		getConvertiblesDilutionPercent,
+		getEstimatedDilution
 	} from '$lib/calculations';
 	import tippy from 'svelte-tippy';
 
@@ -213,6 +214,15 @@
 		(data.type === 'priced' &&
 			data.participations.filter((e) => previousInvestorsWithProRata.includes(e))) ||
 		[];
+
+	// Check if this SAFE/note is still unconverted (no priced round after it)
+	$: isUnconverted = (data.type === 'safe' || data.type === 'convertible') &&
+		!$events.slice(index + 1).some((e) => e.type === 'priced');
+
+	// Get estimated dilution for unconverted SAFEs/notes
+	$: estimatedDilution = (data.type === 'safe' || data.type === 'convertible')
+		? getEstimatedDilution(data)
+		: null;
 </script>
 
 <div class="group relative flex flex-col items-center h-[105px] __event max-sm:h-[140px]">
@@ -684,9 +694,16 @@
 					</div>
 				{/if}
 			{:else if data.type === 'safe'}
-				<div class="bg-bg flex align-center justify-center py-5 rounded-b-2xl">
-					<span class="mr-3 text-textLight">SAFE type</span>
-					<span>{getSafeType(data)}</span>
+				<div class="bg-bg flex flex-col align-center justify-center py-5 rounded-b-2xl text-center">
+					<div class="flex justify-center">
+						<span class="mr-3 text-textLight">SAFE type</span>
+						<span>{getSafeType(data)}</span>
+					</div>
+					{#if isUnconverted && estimatedDilution !== null}
+						<div class="text-xs text-primary mt-2 font-medium">
+							Est. Ownership: {estimatedDilution.toFixed(1)}%
+						</div>
+					{/if}
 				</div>
 				<div
 					class="hidden py-10 rounded-xl bg-bg w-full max-sm:flex flex-col items-center justify-center"
@@ -703,6 +720,11 @@
 					<div class="text-xs text-textLight mt-2">
 						Converts at: {formatAmount(getConvertibleNoteAccruedAmount(data))} (principal + interest)
 					</div>
+					{#if isUnconverted && estimatedDilution !== null}
+						<div class="text-xs text-primary mt-2 font-medium">
+							Est. Ownership: {estimatedDilution.toFixed(1)}%
+						</div>
+					{/if}
 				</div>
 				<div
 					class="hidden py-10 rounded-xl bg-bg w-full max-sm:flex flex-col items-center justify-center"

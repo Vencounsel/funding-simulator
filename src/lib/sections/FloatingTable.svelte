@@ -3,11 +3,12 @@
 	import {
 		AVAILABLE_OPTIONS_LABEL,
 		EMPLOYEE_OPTIONS_LABEL,
-		getTableTotalShares
+		getTableTotalShares,
+		getEstimatedDilution
 	} from '$lib/calculations';
 	import { events, founders, tables } from '$lib/store';
 	import { get } from 'svelte/store';
-	import type { Safe, Accelerator } from '$lib/types';
+	import type { Safe, Accelerator, ConvertibleNote } from '$lib/types';
 
 	export let position: number;
 	export let valuation: number | undefined = undefined;
@@ -111,6 +112,32 @@
 	})();
 
 	$: optionsLines = lines.filter((l) => l.type === 'options');
+
+	// Get unconverted SAFEs/notes (those issued up to this position with no priced round after)
+	$: unconvertedInstruments = (() => {
+		const eventsUpToPosition = $events.slice(0, position + 1);
+		const hasPricedRoundAfter = $events.slice(position + 1).some((e) => e.type === 'priced');
+
+		if (hasPricedRoundAfter) return []; // They will convert at the next priced round
+
+		// Find the last priced round index before or at this position
+		let lastPricedIndex = -1;
+		eventsUpToPosition.forEach((e, idx) => {
+			if (e.type === 'priced') lastPricedIndex = idx;
+		});
+
+		// Get SAFEs/notes issued after the last priced round (unconverted)
+		return eventsUpToPosition
+			.filter((e, idx): e is Safe | ConvertibleNote =>
+				(e.type === 'safe' || e.type === 'convertible') && idx > lastPricedIndex
+			)
+			.map((e) => ({
+				name: e.name,
+				estimatedOwnership: getEstimatedDilution(e),
+				type: e.type
+			}))
+			.filter((e) => e.estimatedOwnership !== null);
+	})();
 </script>
 
 <div class="flex flex-col items-center z-[1] w-max max-sm:w-full max-sm:max-w-[340px]">
@@ -240,5 +267,33 @@
 				</div>
 			</div>
 		{/each}
+		{#if unconvertedInstruments.length > 0}
+			<div
+				class="relative w-full flex-1 text-[10px] uppercase [letter-spacing:0.5px] text-textLight"
+			>
+				<div class="absolute h-[2px] bg-borderDark w-full top-[50%] left-0" />
+				<div class="mx-auto w-fit relative z-[2] bg-white p-1">Est. Ownership</div>
+			</div>
+			{#each unconvertedInstruments as instrument}
+				<div
+					class="group/line hover:bg-borderLight p-0.5 px-2 -mx-2 flex text-xs gap-6 justify-between border-borderLight last:border-none"
+				>
+					<div class="shrink-0 min-w-[70px] text-textLight italic">
+						{instrument.name}
+					</div>
+					<div class="text-textLight italic">
+						~{instrument.estimatedOwnership?.toFixed(1)}%
+					</div>
+					{#if valuation}
+						<div class="w-[70px] text-right text-textLight italic">
+							—
+						</div>
+					{/if}
+					<div class="w-[45px] text-right text-textLight text-center">
+						—
+					</div>
+				</div>
+			{/each}
+		{/if}
 	</div>
 </div>

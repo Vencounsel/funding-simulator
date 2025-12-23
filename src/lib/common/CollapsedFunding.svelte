@@ -5,7 +5,7 @@
 	import type { ConvertibleNote, PricedRound, Safe } from '$lib/types';
 
 	import DeleteIcon from '$lib/icons/DeleteIcon.svelte';
-	import { getSafesValuations, getSafesWithMFN, getConvertibleNotesValuations, getConvertibleNotesWithMFN, getConvertibleNoteAccruedAmount, getTableTotalShares } from '$lib/calculations';
+	import { getSafesValuations, getSafesWithMFN, getConvertibleNotesValuations, getConvertibleNotesWithMFN, getConvertibleNoteAccruedAmount, getTableTotalShares, getEstimatedDilution } from '$lib/calculations';
 
 	$: pricedRounds = $events.filter((e) => e.type === 'priced') as PricedRound[];
 	$: firstPricedRound = pricedRounds[0] || null;
@@ -146,6 +146,33 @@
 		? getConvertibleNotesWithMFN(notesBase, safesBase).find((el) => el.name === data.name)
 				?.valuation || null
 		: null;
+
+	// Check if this SAFE/note is unconverted (no priced round after it)
+	$: isUnconverted = (data.type === 'safe' || data.type === 'convertible') &&
+		!$events.slice(index + 1).some((e) => e.type === 'priced');
+
+	// Calculate cumulative estimated dilution for all unconverted SAFEs/notes up to this position
+	$: cumulativeEstDilution = (() => {
+		if (data.type !== 'safe' && data.type !== 'convertible') return null;
+		if (!isUnconverted) return null;
+
+		// Find last priced round index before this event
+		let lastPricedIndex = -1;
+		$events.slice(0, index).forEach((e, idx) => {
+			if (e.type === 'priced') lastPricedIndex = idx;
+		});
+
+		// Sum up estimated dilution for all unconverted SAFEs/notes from lastPricedIndex+1 to index (inclusive)
+		let totalDilution = 0;
+		$events.slice(lastPricedIndex + 1, index + 1).forEach((e) => {
+			if (e.type === 'safe' || e.type === 'convertible') {
+				const dilution = getEstimatedDilution(e);
+				if (dilution !== null) totalDilution += dilution;
+			}
+		});
+
+		return totalDilution > 0 ? totalDilution : null;
+	})();
 </script>
 
 <div
@@ -254,6 +281,8 @@
 	)}>
 		{#if data.type === 'priced'}
 			Diluted by {getDilutedBy()}% <span class="max-sm:hidden">{getIncludingMessage()}</span>
+		{:else if isUnconverted && cumulativeEstDilution !== null}
+			Est. Dilution: {cumulativeEstDilution.toFixed(1)}%
 		{:else if data.type === 'safe' && effectiveValuation}
 			Effective valuation: {formatAmount(effectiveValuation)}
 		{:else if data.type === 'convertible' && effectiveNoteValuation}

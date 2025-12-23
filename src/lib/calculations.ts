@@ -73,6 +73,24 @@ export const getConvertiblesDilutionPercent = (
 	return (totalSafesDilution + totalNotesDilution) * 100;
 };
 
+// Calculate estimated dilution for an unconverted SAFE or convertible note
+// Returns the implied ownership percentage based on amount and valuation cap
+// Returns null if uncapped (can't estimate without a priced round)
+export const getEstimatedDilution = (
+	event: Safe | ConvertibleNote
+): number | null => {
+	if (!event.valCap) return null; // Can't estimate for uncapped instruments
+
+	if (event.type === 'safe') {
+		// Post-money SAFE: amount / valCap = implied ownership
+		return (event.amount / event.valCap) * 100;
+	} else {
+		// Convertible note: (principal + full term interest) / valCap
+		const totalAmount = getConvertibleNoteAccruedAmount(event);
+		return (totalAmount / event.valCap) * 100;
+	}
+};
+
 // Get SAFEs valuations, optionally filtered by event index range
 // afterIndex: only include SAFEs with eventIndex > afterIndex (-1 means all)
 // beforeOrAtIndex: only include SAFEs with eventIndex <= beforeOrAtIndex
